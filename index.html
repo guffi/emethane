@@ -239,7 +239,7 @@ details.assume[open] summary::after { content: "Hide"; }
 #mountSeg { border-radius: 14px; }
 #mountSeg button { border-radius: 11px; line-height: 1.25; }
 #mountSeg button small { display: block; font-size: 10.5px; font-weight: 400; color: var(--muted); white-space: nowrap; }
-#mountSeg button small:empty { display: none; }
+#mountSeg button small.ph { opacity: .7; font-style: italic; }   /* placeholder until the numbers are in, so the boxes keep their height */
 .site-status { font-size: 12.5px; color: var(--muted); margin-top: 6px; }
 .site-status b { color: var(--text); font-weight: 600; }
 .site-status.err { color: var(--bad); }
@@ -1080,7 +1080,9 @@ details.assume[open] summary::after { content: "Hide"; }
       b.setAttribute('aria-pressed', String(b.dataset.m === mount));
       let f = pick && (saved[siteKey(pick.lat, pick.lon, b.dataset.m, PERIOD)] || (SITE.lat === pick.lat && SITE.lon === pick.lon && saved[siteKey(pick.lat, pick.lon, b.dataset.m, SITE.year)])), est = '';
       if (!f && pick && SITE.est && SITE.est.fits) { f = SITE.est.fits[b.dataset.m]; est = '~'; }
-      b.querySelector('small').innerHTML = f ? `${est}${nf(f.kwh, 0)}<span class="lw"> kWh/kWp</span> · ${est}${nf(f.cf * 100, 1)}%` : '';
+      const sm = b.querySelector('small');
+      sm.classList.toggle('ph', !f);
+      sm.innerHTML = f ? `${est}${nf(f.kwh, 0)}<span class="lw"> kWh/kWp</span> · ${est}${nf(f.cf * 100, 1)}%` : !pick ? 'pick a site for yield' : fetching ? 'loading yield…' : 'yield not fitted yet';
       b.title = f ? `${est ? 'Estimate: ' : ''}${nf(f.kwh, 0)} kWh/kWp DC a year, capacity factor ${nf(f.cf * 100, 1)}%` : '';
     });
   }

@@ -7,7 +7,7 @@
 <meta name="description" content="Client-side project calculator for solar-powered e-methane: CO2 supply, solar power price, H2 plant capex and methanation uptime in; LCOH, production cost, plant size, capex and unlevered IRR out.">
 <link rel="canonical" href="https://guffi.github.io/emethane/">
 <style>
-/* Layout: H2 Cost family look. Header, then a two-column grid: inputs and charts on the left, a sticky results column on the right. One column on phones, results first. */
+/* Layout: header, a compact results strip (production cost, off-take, hydrogen cost), a four-box key-figure line, then inputs and charts on the left with a sticky details column on the right. One column below 900px: inputs, details table, then the charts. */
 :root {
   --bg: #f6f8f7; --panel: #ffffff; --panel-soft: #fbfcfb;
   --text: #17211f; --muted: #66736f; --border: #dfe6e3; --border-strong: #cbd7d3;
@@ -49,11 +49,26 @@ header.top p { margin: 0; color: var(--muted); max-width: 62ch; font-size: 15px;
 .btn:focus-visible, input:focus-visible, .seg button:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .top-actions { display: flex; gap: 8px; align-items: center; }
 .copied { color: var(--accent-strong); font-size: 13px; }
+.ln { display: none; }
+@media (max-width: 640px) { .lw { display: none !important; } .ln { display: inline; } }
 
 .layout { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 16px; align-items: start; }
 .main { display: grid; gap: 16px; min-width: 0; }
 .side { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 16px); display: grid; gap: 12px; min-width: 0; }
-@media (max-width: 900px) { .layout { grid-template-columns: minmax(0, 1fr); } .side { position: static; order: -1; } }
+.summary { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 360px; gap: 10px; margin-bottom: 10px; }
+.kpiline { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-bottom: 16px; }
+@media (max-width: 900px) {
+  .wrap { padding-top: 14px; }
+  header.top { margin-bottom: 12px; align-items: center; }
+  header.top h1 { font-size: 24px; margin: 0; }
+  header.top p { display: none; }
+  .btn { padding: 6px 10px; font-size: 13px; }
+  .summary { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-bottom: 8px; }
+  .kpiline { gap: 8px; margin-bottom: 12px; }
+  .layout { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+  .main, .side { display: contents; }
+  .o-inputs { order: 1; } .o-minor { order: 2; } .o-cost { order: 3; } .o-h2 { order: 4; } .o-gauge { order: 5; } .o-cf { order: 6; } .o-assume { order: 7; }
+}
 
 .panel { background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 18px; min-width: 0; }
 .panel h2 { font-size: 17px; margin: 0 0 4px; text-wrap: balance; }
@@ -79,21 +94,29 @@ input[inputmode=decimal]:hover { border-color: var(--border-strong); }
 .seg button[aria-pressed="true"] { background: var(--accent-soft); color: var(--accent-strong); font-weight: 700; box-shadow: inset 0 0 0 1px var(--accent); }
 
 .lcoh-inline { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin: 6px 0 2px; padding: 7px 12px; border-radius: 6px; background: var(--accent-soft); color: var(--accent-strong); font-size: 13px; }
-.lcoh-inline b { font-size: 16px; font-variant-numeric: tabular-nums; }
+.lcoh-inline b { font-size: 16px; font-variant-numeric: tabular-nums; text-align: right; }
+@media (max-width: 640px) { .lcoh-inline b { font-size: 14px; } header.top h1 { font-size: 21px; } header.top { flex-wrap: nowrap; } .btn { white-space: nowrap; } }
 
-.pricepair { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 8px; }
-.pc { border-radius: var(--radius); padding: 12px 14px; min-width: 0; }
+.pc { border-radius: var(--radius); padding: 10px 14px; min-width: 0; }
 .pc .lab { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700; }
-.pc .val { font-size: 28px; font-weight: 800; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; line-height: 1.2; color: var(--text); }
+.pc .val { font-size: 26px; font-weight: 800; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; line-height: 1.2; color: var(--text); white-space: nowrap; }
 .pc .val small { font-size: 13px; font-weight: 600; color: var(--muted); margin-left: 2px; }
 .pc .nt { font-size: 12px; color: var(--muted); }
 .pc.cost { background: var(--accent-soft); } .pc.cost .lab { color: var(--accent-strong); }
 .pc.off { background: var(--offtake-soft); } .pc.off .lab { color: var(--offtake); }
 .pc .nt b { font-variant-numeric: tabular-nums; }
-.panel.offtake input[type=range] { accent-color: var(--offtake); }
-@media (max-width: 420px) { .pricepair { grid-template-columns: 1fr; } }
+.pc.h2 { background: var(--panel); border: 1px solid var(--border); } .pc.h2 .lab { color: var(--muted); }
+.pc .nt { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#g-off input[type=range] { accent-color: var(--offtake); }
+@media (max-width: 640px) {
+  .pc { padding: 8px 10px; }
+  .pc .lab { font-size: 9.5px; letter-spacing: 0.05em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .pc .val { font-size: 19px; } .pc .val small { font-size: 10.5px; margin-left: 1px; }
+  .pc .nt { font-size: 10.5px; }
+}
+@media (max-width: 400px) { .pc { padding: 7px 7px; } .pc .val { font-size: 15.5px; } .pc .val small { font-size: 9px; } header.top h1 { font-size: 18px; white-space: nowrap; } .btn { padding: 5px 8px; } }
 
-.gauge-card { grid-column: 1 / -1; background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; }
+.gauge-card { background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; }
 .gauge-card .ghead { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
 #gauge svg { display: block; width: 100%; max-width: 320px; height: auto; margin: 4px auto 0; }
 .targets { width: 100%; border-collapse: collapse; font-size: 12.5px; margin-top: 6px; font-variant-numeric: tabular-nums; }
@@ -103,24 +126,26 @@ input[inputmode=decimal]:hover { border-color: var(--border-strong); }
 .targets tr:last-child td { border-bottom: 0; }
 .targets tr.hit td { color: var(--muted); }
 .targets .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
-.kpi.wide { grid-column: 1 / -1; display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
 
-.hero { background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px 20px; }
 .eyebrow { font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); font-weight: 700; }
-.big { display: flex; align-items: baseline; gap: 6px; margin: 2px 0 12px; }
-.big .num { font-size: 64px; font-weight: 800; letter-spacing: -0.04em; line-height: 1; font-variant-numeric: tabular-nums; }
-.big .per { font-size: 22px; color: var(--muted); font-weight: 700; }
 .stack { display: flex; height: 14px; border-radius: 4px; overflow: hidden; background: var(--grid); }
 .stack span { display: block; height: 100%; min-width: 0; }
 .legend { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 10px; font-size: 12.5px; color: var(--muted); }
 .legend i { display: inline-block; width: 9px; height: 9px; border-radius: 2px; margin-right: 5px; vertical-align: 0; }
 .legend b { color: var(--text); font-variant-numeric: tabular-nums; }
 
-.kpis { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.kpi { background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; min-width: 0; }
-.kpi .v { font-size: 26px; font-weight: 750; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; line-height: 1.15; }
-.kpi .v small { font-size: 14px; color: var(--muted); font-weight: 600; margin-left: 3px; }
-.kpi .k { color: var(--muted); font-size: 12.5px; margin-top: 2px; }
+.kpi { background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); padding: 9px 14px; min-width: 0; }
+.kpi .v { font-size: 22px; font-weight: 750; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; line-height: 1.15; white-space: nowrap; }
+.kpi .v small { font-size: 12.5px; color: var(--muted); font-weight: 600; margin-left: 3px; }
+.kpi .k { color: var(--muted); font-size: 12px; margin-top: 1px; }
+.kpi .v .pill { margin: 0 0 0 8px; padding: 1px 7px; font-size: 10.5px; letter-spacing: 0; vertical-align: 3px; }
+.kpi .k b.bad { color: var(--bad); } .kpi .k b.ok { color: var(--warn); } .kpi .k b.good, .kpi .k b.vgood, .kpi .k b.great { color: var(--good); }
+@media (max-width: 640px) {
+  .kpi { padding: 7px 9px; }
+  .kpi .v { font-size: 17px; } .kpi .v small { font-size: 10px; margin-left: 2px; }
+  .kpi .k { font-size: 10.5px; line-height: 1.25; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+}
+@media (max-width: 400px) { .kpi { padding: 6px 6px; } .kpi .v { font-size: 14.5px; } .kpi .v small { font-size: 8.5px; margin-left: 1px; } }
 .pill { display: inline-block; font-size: 11.5px; font-weight: 700; padding: 2px 8px; border-radius: 999px; margin-top: 6px; }
 .pill.good { background: var(--good-soft); color: var(--good); }
 .pill.bad { background: var(--bad-soft); color: var(--bad); }
@@ -168,48 +193,51 @@ details.assume[open] summary::after { content: "Hide"; }
     </div>
     <div class="top-actions">
       <span class="copied" id="copied" hidden>Link copied</span>
-      <button class="btn" id="copyBtn" type="button">Copy scenario link</button>
-      <button class="btn" id="csvBtn" type="button">Export CSV</button>
+      <button class="btn" id="copyBtn" type="button"><span class="lw">Copy scenario link</span><span class="ln">Copy link</span></button>
+      <button class="btn" id="csvBtn" type="button"><span class="lw">Export CSV</span><span class="ln">CSV</span></button>
     </div>
   </header>
 
+  <section class="summary" aria-label="Headline results">
+    <div class="pc cost"><div class="lab"><span class="lw">Production cost (LCOM)</span><span class="ln">Cost (LCOM)</span></div><div class="val" id="lcomBig">–</div><div class="nt" id="lcomNote">break-even, incl. return at WACC</div></div>
+    <div class="pc off"><div class="lab"><span class="lw">Off-take price</span><span class="ln">Off-take</span></div><div class="val" id="offBig">–</div><div class="nt">margin <b id="offMargin">–</b></div></div>
+    <div class="pc h2"><div class="lab"><span class="lw">Hydrogen cost (LCOH)</span><span class="ln">H₂ (LCOH)</span></div><div class="val" id="lcoh">–</div><div class="nt"><span class="lw">per kg </span>into methanation</div></div>
+  </section>
+  <section class="kpiline" aria-label="Key figures">
+    <div class="kpi"><div class="v" id="kPower">–</div><div class="k"><span class="lw">Installed power</span><span class="ln">Power</span></div></div>
+    <div class="kpi"><div class="v" id="kCapex">–</div><div class="k"><span class="lw">Total capex</span><span class="ln">Capex</span></div></div>
+    <div class="kpi"><div class="v"><span id="kIrr">–</span><span class="pill lw" id="kIrrPill2"></span></div><div class="k"><span class="lw">IRR, unlevered</span><span class="ln">IRR · </span><b class="ln" id="kIrrRate"></b></div></div>
+    <div class="kpi"><div class="v" id="kOut">–</div><div class="k"><span class="lw">E-methane output</span><span class="ln">Output</span></div></div>
+  </section>
+
   <div class="layout">
     <div class="main">
-      <section class="panel" aria-labelledby="h-inputs">
+      <section class="panel o-inputs" aria-labelledby="h-inputs">
         <h2 id="h-inputs">Main inputs</h2>
         <div class="group-label">CO₂</div>
         <div id="g-co2"></div>
         <div class="group-label">Hydrogen and power</div>
         <div id="g-h2"></div>
-        <div class="lcoh-inline"><span>Hydrogen cost from these inputs</span><b id="lcohInline">–</b></div>
         <div class="group-label">Methanation</div>
         <div id="g-meth"></div>
-        <div class="lcoh-inline"><span>Methanation unit and H₂ buffer</span><b id="methInline">–</b></div>
-        <div class="group-label">Finance</div>
+        <div class="lcoh-inline"><span><span class="lw">Methanation unit and H₂ buffer</span><span class="ln">Unit + buffer</span></span><b id="methInline">–</b></div>
+        <div class="group-label">Finance and off-take</div>
         <div id="g-fin"></div>
-      </section>
-
-      <section class="panel offtake" aria-labelledby="h-off">
-        <h2 id="h-off" hidden>Production cost and off-take price</h2>
-        <div class="pricepair">
-          <div class="pc cost"><div class="lab">Production cost (LCOM)</div><div class="val" id="lcomBig">–</div><div class="nt" id="lcomNote">break-even, incl. return at WACC</div></div>
-          <div class="pc off"><div class="lab">Off-take price</div><div class="val" id="offBig">–</div><div class="nt">margin <b id="offMargin">–</b></div></div>
-        </div>
         <div id="g-off"></div>
       </section>
 
-      <section class="panel" aria-labelledby="h-cost">
+      <section class="panel o-cost" aria-labelledby="h-cost">
         <div class="panel-head"><h2 id="h-cost">What each MWh of e-methane costs</h2><span class="sub" id="costTotal"></span></div>
         <div class="costbar" id="costbar"></div>
         <div class="legend" id="costLegend"></div>
       </section>
 
-      <section class="panel" aria-labelledby="h-cf">
+      <section class="panel o-cf" aria-labelledby="h-cf">
         <div class="panel-head"><h2 id="h-cf">Cash flow</h2><span class="sub" id="cfSub"></span></div>
         <div class="chart" id="cfChart" role="img" aria-label="Net and cumulative cash flow by year"></div>
       </section>
 
-      <section class="panel">
+      <section class="panel o-assume">
         <details class="assume" id="assume">
           <summary>Assumptions</summary>
           <div class="agrid" id="agrid"></div>
@@ -219,24 +247,18 @@ details.assume[open] summary::after { content: "Hide"; }
       </section>
     </div>
 
-    <aside class="side" aria-label="Results">
-      <div class="hero">
-        <div class="eyebrow">Levelized cost of hydrogen</div>
-        <div class="big"><span class="num" id="lcoh">–</span><span class="per">/kg-H₂</span></div>
-        <div class="stack" id="lcohStack"></div>
+    <aside class="side" aria-label="Details">
+      <dl class="minor o-minor" id="minor"></dl>
+      <section class="panel o-h2" aria-labelledby="h-h2">
+        <h2 id="h-h2">What each kg of hydrogen costs</h2>
+        <div class="stack" id="lcohStack" style="margin-top:10px"></div>
         <div class="legend" id="lcohLegend"></div>
+      </section>
+      <div class="gauge-card o-gauge">
+        <div class="ghead"><span class="eyebrow">Project IRR, unlevered</span><span class="pill" id="kIrrPill"></span></div>
+        <div id="gauge" role="img" aria-label="Unlevered IRR gauge"></div>
+        <table class="targets"><thead><tr><th>To reach</th><th>Off-take price</th><th>or power price</th></tr></thead><tbody id="targets"></tbody></table>
       </div>
-      <div class="kpis">
-        <div class="kpi"><div class="v" id="kPower">–</div><div class="k">Installed power, sized to the capacity factor</div></div>
-        <div class="kpi"><div class="v" id="kCapex">–</div><div class="k">Total capex, H₂ plant + methanation + H₂ buffer</div></div>
-        <div class="gauge-card">
-          <div class="ghead"><span class="eyebrow">Project IRR, unlevered</span><span class="pill" id="kIrrPill"></span></div>
-          <div id="gauge" role="img" aria-label="Unlevered IRR gauge"></div>
-          <table class="targets"><thead><tr><th>To reach</th><th>Off-take price</th><th>or power price</th></tr></thead><tbody id="targets"></tbody></table>
-        </div>
-        <div class="kpi wide"><div><div class="k" style="margin:0">E-methane output</div></div><div class="v" id="kOut">–</div></div>
-      </div>
-      <dl class="minor" id="minor"></dl>
     </aside>
   </div>
 </div>
@@ -489,8 +511,7 @@ details.assume[open] summary::after { content: "Hide"; }
   function render() {
     const m = model(S);
     const lcohTxt = `$${nf(m.lcoh, 2)}`;
-    document.getElementById('lcoh').textContent = lcohTxt;
-    document.getElementById('lcohInline').textContent = `${lcohTxt}/kg`;
+    document.getElementById('lcoh').innerHTML = `${lcohTxt}<small>/kg</small>`;
     const lcItems = [
       { n: 'Electricity', v: m.lc.elec, c: '--s-power' }, { n: 'Capex', v: m.lc.capex, c: '--s-capex' },
       { n: 'Stack replacement', v: m.lc.repl, c: '--s-react' }, { n: 'Fixed O&M', v: m.lc.om, c: '--s-h2om' }, { n: 'Water', v: m.lc.water, c: '--s-co2' },
@@ -504,6 +525,9 @@ details.assume[open] summary::after { content: "Hide"; }
     const pill = document.getElementById('kIrrPill');
     const rate = !isFinite(m.irr) ? ['bad', 'Never pays back'] : m.irr >= 0.25 ? ['great', 'Great'] : m.irr >= 0.20 ? ['vgood', 'Very good'] : m.irr >= 0.15 ? ['good', 'Good'] : m.irr >= 0.10 ? ['ok', 'OK'] : ['bad', 'Weak'];
     pill.className = 'pill ' + rate[0]; pill.textContent = rate[1];
+    const pill2 = document.getElementById('kIrrPill2'); pill2.className = pill.className + ' lw'; pill2.textContent = rate[1];
+    const rEl = document.getElementById('kIrrRate'); rEl.className = 'ln ' + rate[0]; rEl.textContent = rate[1];
+    document.getElementById('kIrr').textContent = pct(m.irr);
     pill.title = 'Unlevered IRR rating: under 10% weak, 10–15% OK, 15–20% good, 20–25% very good, 25%+ great';
     drawGauge(m.irr); drawTargets(m);
     const [ov, ou] = energy(m.out); document.getElementById('kOut').innerHTML = `${ov}<small>${ou}</small>`;
@@ -526,10 +550,10 @@ details.assume[open] summary::after { content: "Hide"; }
     ].map(([k, v]) => `<div><dt>${k}</dt><dd>${v}</dd></div>`).join('');
 
     document.getElementById('lcomBig').innerHTML = `€${nf(m.lcom, 2)}<small>/MWh</small>`;
-    document.getElementById('lcomNote').textContent = `break-even, incl. ${nf(S.wacc, 1)}% WACC`;
+    document.getElementById('lcomNote').innerHTML = `<span class="lw">break-even, incl. </span><span class="ln">at </span>${nf(S.wacc, 1)}% WACC`;
     document.getElementById('offBig').innerHTML = `€${nf(S.price, 0)}<small>/MWh</small>`;
     const marg = S.price - m.lcom, mEl = document.getElementById('offMargin');
-    mEl.textContent = `${marg < 0 ? '−' : '+'}€${nf(Math.abs(marg), 2)}/MWh`; mEl.style.color = `var(${marg < 0 ? '--bad' : '--good'})`;
+    mEl.innerHTML = `${marg < 0 ? '−' : '+'}€${nf(Math.abs(marg), 2)}<span class="lw">/MWh</span>`; mEl.style.color = `var(${marg < 0 ? '--bad' : '--good'})`;
 
     const items = [
       { n: 'Capex recovery', v: m.per.capex, c: '--s-capex' }, { n: 'Power', v: m.per.power, c: '--s-power' },

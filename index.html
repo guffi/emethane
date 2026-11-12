@@ -219,6 +219,22 @@ details.assume[open] summary::after { content: "Hide"; }
 .afield .unit { grid-column: 1 / -1; color: var(--muted); font-size: 12px; margin-top: -4px; }
 .afield input[inputmode=decimal] { font-size: 14px; padding: 5px 8px; }
 .ahead { grid-column: 1 / -1; margin-top: 12px; }
+.site { position: relative; margin: 6px 0 4px; }
+.site-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.site-row input[type=search] { flex: 1 1 240px; min-width: 0; font: inherit; font-size: 14px; padding: 7px 10px; border: 1px solid var(--border-strong); border-radius: var(--radius); background: var(--panel); color: var(--text); }
+.site-row select { font: inherit; font-size: 13px; padding: 6px 8px; border: 1px solid var(--border-strong); border-radius: var(--radius); background: var(--panel); color: var(--text); }
+.site-list { position: absolute; z-index: 30; left: 0; right: 0; top: 42px; margin: 0; padding: 4px; list-style: none; background: var(--panel); border: 1px solid var(--border-strong); border-radius: var(--radius); box-shadow: 0 8px 24px rgba(0,0,0,.14); max-height: 300px; overflow: auto; }
+.site-list li { padding: 7px 9px; border-radius: 6px; cursor: pointer; font-size: 13px; }
+.site-list li[aria-selected="true"], .site-list li:hover { background: var(--accent-soft); }
+.site-list li small { color: var(--muted); margin-left: 6px; }
+.site-list li.wide { color: var(--accent-strong); font-weight: 600; }
+@media (max-width: 640px) { .site-row input[type=search] { font-size: 16px; } }
+.site-status { font-size: 12.5px; color: var(--muted); margin-top: 6px; }
+.site-status b { color: var(--text); font-weight: 600; }
+.site-status.err { color: var(--bad); }
+.site-act { margin-top: 8px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.btn.primary { background: var(--accent); color: #fff; border-color: var(--accent); font-weight: 600; }
+.btn.primary:disabled { opacity: .6; cursor: progress; }
 .foot { color: var(--muted); font-size: 12.5px; margin-top: 18px; max-width: 80ch; }
 @media (prefers-reduced-motion: no-preference) { .stack span { transition: flex-basis .25s ease; } }
 </style>
@@ -256,6 +272,17 @@ details.assume[open] summary::after { content: "Hide"; }
     <div class="main">
       <section class="panel o-inputs" aria-labelledby="h-inputs">
         <h2 id="h-inputs">Main inputs</h2>
+        <div class="group-label">Site and solar profile</div>
+        <div class="site" id="site">
+          <div class="site-row">
+            <input type="search" id="siteQ" placeholder="Type a place or region, or lat, lon" autocomplete="off" spellcheck="false" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="siteList" aria-label="Site">
+            <div class="seg" role="group" aria-label="Mounting" id="mountSeg"><button type="button" data-m="tracker">Tracker</button><button type="button" data-m="fixed">Fixed tilt</button><button type="button" data-m="ew">East-west</button></div>
+            <select id="siteYear" aria-label="Weather year"></select>
+          </div>
+          <ul class="site-list" id="siteList" role="listbox" hidden></ul>
+          <div class="site-act" id="siteAct" hidden><button class="btn primary" type="button" id="siteFetch">Fetch hourly solar data</button><span class="site-status" id="siteHint" style="margin:0"></span></div>
+          <div class="site-status" id="siteStatus"></div>
+        </div>
         <div class="group-label">CO₂</div>
         <div id="g-co2"></div>
         <div class="group-label">Hydrogen and power</div>
@@ -285,7 +312,7 @@ details.assume[open] summary::after { content: "Hide"; }
           <summary>Assumptions</summary>
           <div class="agrid" id="agrid"></div>
           <div style="margin-top:14px"><button class="btn" id="resetBtn" type="button">Reset all inputs</button></div>
-          <p class="foot">Opening the page always starts from the defaults. Changes are not saved in the address bar; use Copy scenario link to keep or share a set of inputs. Real terms, pre-tax, unlevered: the IRR assumes no debt, so it is the project return before leverage. Rating bands for the unlevered IRR: under 10% weak, 10–15% OK, 15–20% good, 20–25% very good, 25% and up great. All capex in year 0, operation in years 1 to lifetime. Methane in MWh (LHV, 13.89 MWh/t). CO₂ and H₂ use are stoichiometric (CO₂ + 4 H₂ → CH₄ + 2 H₂O). Equipment costs are entered for a unit running 24/7 and each unit is then sized by its own uptime: the electrolyzer by the capacity factor, the methanation unit by the methanation uptime (never below the capacity factor). When methanation runs more hours than the electrolyzer, an H₂ buffer covers the gap; it is sized at 1.3 × an average day of H₂ × (1 − capacity factor / methanation uptime), a rule fitted to an hourly simulation of a tracker plant in southern Spain. Solar output is modelled as a sine wave over the year (the seasonal swing, automatically flattened as the capacity factor nears 100%). On summer days when the electrolyzer makes more H₂ than the methanation unit can take, the surplus is vented and the electrolyzer is enlarged to make up for it, so pushing uptime too high costs more H₂ plant. With Auto ticked, the methanation uptime is reset to the value with the lowest production cost every time an input changes; moving the uptime slider switches Auto off. Hydrogen cost is per kg delivered to methanation, after venting. All power is bought at the solar price, including methanation power outside solar hours and DAC power when the CO₂ source is DAC. With DAC as the CO₂ source, CO₂ comes off the electrolyzer in step with the H₂, so a CO₂ buffer of 5.46 kg per kg of H₂ buffered is added, and DAC power and CO₂ cost also cover the CO₂ vented with the H₂ in summer. Biogenic CO₂ is assumed delivered as needed, with no buffer. The H₂ plant is costed in USD and converted at the exchange rate. Stacks are replaced when cumulative run hours pass the replacement interval.</p>
+          <p class="foot">Opening the page always starts from the defaults. Changes are not saved in the address bar; use Copy scenario link to keep or share a set of inputs. Real terms, pre-tax, unlevered: the IRR assumes no debt, so it is the project return before leverage. Rating bands for the unlevered IRR: under 10% weak, 10–15% OK, 15–20% good, 20–25% very good, 25% and up great. All capex in year 0, operation in years 1 to lifetime. Methane in MWh (LHV, 13.89 MWh/t). CO₂ and H₂ use are stoichiometric (CO₂ + 4 H₂ → CH₄ + 2 H₂O). Equipment costs are entered for a unit running 24/7 and each unit is then sized by its own uptime: the electrolyzer by the capacity factor, the methanation unit by the methanation uptime (never below the capacity factor). When methanation runs more hours than the electrolyzer, an H₂ buffer covers the gap; it is sized at the buffer size factor × an average day of H₂ × (1 − capacity factor / methanation uptime). Solar output is modelled as a sine wave over the year (the seasonal swing, automatically flattened as the capacity factor nears 100%). The defaults (25%, ±45%, 1.3) come from a synthetic tracker profile for southern Spain. Pick a site to replace them: the page fetches one year of hourly irradiance and temperature for that point, turns it into DC output per kWp for the chosen mounting (single-axis tracker limited to ±60°, fixed tilt facing the equator, or east-west at 10°; isotropic sky, 0.2 albedo, 10% DC losses, −0.35%/°C), with the electrolyzer following the array one to one. The capacity factor is the yearly mean; the seasonal swing is the sine amplitude that best reproduces venting on the real daily totals; the buffer factor is the smallest buffer that still delivers the full output in an hourly simulation, averaged over uptimes of 50–80%. It is a rough fit on one weather year, not a bankable yield study. Solar data: Open-Meteo historical weather API (ERA5 and ERA5-Land reanalysis, Copernicus/ECMWF), CC BY 4.0. Place search: Open-Meteo geocoding (GeoNames) and OpenStreetMap Nominatim (© OpenStreetMap contributors). Fetched sites are saved in this browser. On summer days when the electrolyzer makes more H₂ than the methanation unit can take, the surplus is vented and the electrolyzer is enlarged to make up for it, so pushing uptime too high costs more H₂ plant. With Auto ticked, the methanation uptime is reset to the value with the lowest production cost every time an input changes; moving the uptime slider switches Auto off. Hydrogen cost is per kg delivered to methanation, after venting. All power is bought at the solar price, including methanation power outside solar hours and DAC power when the CO₂ source is DAC. With DAC as the CO₂ source, CO₂ comes off the electrolyzer in step with the H₂, so a CO₂ buffer of 5.46 kg per kg of H₂ buffered is added, and DAC power and CO₂ cost also cover the CO₂ vented with the H₂ in summer. Biogenic CO₂ is assumed delivered as needed, with no buffer. The H₂ plant is costed in USD and converted at the exchange rate. Stacks are replaced when cumulative run hours pass the replacement interval.</p>
         </details>
       </section>
     </div>
@@ -337,7 +364,8 @@ details.assume[open] summary::after { content: "Hide"; }
     { k: 'mom', label: 'Methanation fixed O&M', unit: '% of methanation capex per year', def: 2, min: 0, max: 15, step: 0.1 },
     { k: 'bc', label: 'H₂ buffer storage', unit: '€ per kg H₂ stored, installed', def: 700, min: 0, max: 5000, step: 10 },
     { k: 'cbc', label: 'CO₂ buffer storage', unit: '€ per kg CO₂ stored, installed; used when source is DAC', def: 30, min: 0, max: 500, step: 1 },
-    { k: 'sw', label: 'Seasonal swing in solar output', unit: '± % around the yearly average', def: 45, min: 0, max: 90, step: 1 },
+    { k: 'sw', label: 'Seasonal swing in solar output', unit: '± % around the yearly average; set by the site', def: 45, min: 0, max: 90, step: 1 },
+    { k: 'bk', label: 'H₂ buffer size factor', unit: '× an average day of H₂ × (1 − capacity factor / uptime); set by the site', def: 1.3, min: 0, max: 50, step: 0.05 },
     { k: 'vrc', label: 'Variable reaction cost', unit: '€/MWh CH₄ (catalyst, utilities)', def: 5, min: 0, max: 50, step: 0.5 },
     { k: 'mp', label: 'Methanation power', unit: 'MWh per MWh CH₄', def: 0.02, min: 0, max: 0.5, step: 0.005 },
     { k: 'log', label: 'Logistics', unit: '€/MWh CH₄ (compression, injection, transport)', def: 8, min: 0, max: 60, step: 0.5 },
@@ -387,7 +415,7 @@ details.assume[open] summary::after { content: "Hide"; }
     const elecMW = h2made * s.sec / hours;
     const h2CapEUR = elecMW * 1000 * s.h2c / fx;
     const methCapEUR = s.mc * methCap;
-    const bufKg = 1.3 * h2made * 1000 / 365 * (1 - cf / u);
+    const bufKg = s.bk * h2made * 1000 / 365 * (1 - cf / u);
     const bufCapEUR = bufKg * s.bc;
     // DAC CO2 comes off the same electrolyzer, in step with the H2, so it needs a buffer in the same proportion (5.46 kg CO2 per kg H2).
     const isDac = s.src === 'DAC';
@@ -775,21 +803,216 @@ details.assume[open] summary::after { content: "Hide"; }
     document.getElementById('targets').innerHTML = rows.join('');
   }
 
+
+  // ---------- site: place search, hourly solar data and the refit of capacity factor, swing and buffer ----------
+  const LAST_YEAR = new Date().getUTCFullYear() - 1;
+  const SITE_DEF = { name: 'Southern Spain, synthetic tracker profile', builtin: true, mount: 'tracker' };
+  let SITE = { ...SITE_DEF };
+  let pick = null, mount = 'tracker', year = LAST_YEAR, hits = [], hitIdx = -1, lastQ = '';
+  const MOUNTS = { tracker: 'single-axis tracker', fixed: 'fixed tilt', ew: 'east-west' };
+  const store = { get() { try { return JSON.parse(localStorage.getItem('emSites') || '{}'); } catch (e) { return {}; } },
+    put(k, v) { try { const all = this.get(); all[k] = v; localStorage.setItem('emSites', JSON.stringify(all)); } catch (e) {} } };
+  const siteKey = (lat, lon, m, y) => `${(+lat).toFixed(2)},${(+lon).toFixed(2)},${m},${y}`;
+  const weather = new Map();                    // raw hourly data already fetched in this visit
+
+  async function getJSON(url) { const r = await fetch(url); if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); }
+  async function geoSearch(q, wide) {
+    const ll = q.match(/^\s*(-?\d+(?:\.\d+)?)\s*[,;\s]\s*(-?\d+(?:\.\d+)?)\s*$/);
+    if (ll) { const lat = +ll[1], lon = +ll[2]; return Math.abs(lat) <= 90 && Math.abs(lon) <= 180 ? [{ name: `${lat.toFixed(3)}, ${lon.toFixed(3)}`, lat, lon }] : []; }
+    if (wide) {
+      const j = await getJSON(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=jsonv2&limit=8&accept-language=en`);
+      return (j || []).map(x => ({ name: x.display_name, lat: +x.lat, lon: +x.lon }));
+    }
+    const j = await getJSON(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(q)}&count=8&language=en&format=json`);
+    return (j.results || []).map(x => ({ name: [x.name, x.admin1, x.country].filter((v, i, a) => v && a.indexOf(v) === i).join(', '), lat: x.latitude, lon: x.longitude }));
+  }
+
+  async function getWeather(lat, lon, y) {
+    const k = `${lat.toFixed(3)},${lon.toFixed(3)},${y}`;
+    if (weather.has(k)) return weather.get(k);
+    const j = await getJSON(`https://archive-api.open-meteo.com/v1/archive?latitude=${lat.toFixed(4)}&longitude=${lon.toFixed(4)}&start_date=${y}-01-01&end_date=${y}-12-31&hourly=temperature_2m,shortwave_radiation,direct_normal_irradiance,diffuse_radiation&timezone=GMT&timeformat=unixtime`);
+    const h = j && j.hourly;
+    if (!h || !h.time || h.time.length < 8000) throw new Error('no hourly data for this point and year');
+    const miss = h.shortwave_radiation.filter(v => v == null).length;
+    if (miss > h.time.length * 0.02) throw new Error(`${y} is incomplete for this point`);
+    weather.set(k, h); return h;
+  }
+
+  // DC output in kWh per kWp for each hour. Open-Meteo radiation is the mean over the preceding hour, so the sun is placed at the half hour.
+  function pvSeries(h, lat, lon, m) {
+    const D = Math.PI / 180, n = h.time.length, out = new Float64Array(n);
+    const sl = Math.sin(lat * D), cl = Math.cos(lat * D);
+    const fb = Math.min(60, Math.abs(lat) * 0.76 + 3.1) * D;            // fixed tilt, facing the equator
+    const fixN = [0, lat >= 0 ? -Math.sin(fb) : Math.sin(fb), Math.cos(fb)];
+    const ew = 10 * D, ewE = [Math.sin(ew), 0, Math.cos(ew)], ewW = [-Math.sin(ew), 0, Math.cos(ew)];
+    const poa = (nv, cosB, dni, dhi, ghi, sE, sN, sU) => dni * Math.max(0, nv[0] * sE + nv[1] * sN + nv[2] * sU) + dhi * (1 + cosB) / 2 + ghi * 0.2 * (1 - cosB) / 2;
+    for (let i = 0; i < n; i++) {
+      const ghi = h.shortwave_radiation[i] || 0; if (ghi <= 0) continue;
+      const dni = h.direct_normal_irradiance[i] || 0, dhi = h.diffuse_radiation[i] || 0, ta = h.temperature_2m[i] ?? 15;
+      const d = (h.time[i] - 1800) / 86400 + 2440587.5 - 2451545.0;
+      const g = (357.529 + 0.98560028 * d) * D, q = 280.459 + 0.98564736 * d;
+      const L = (q + 1.915 * Math.sin(g) + 0.020 * Math.sin(2 * g)) * D, e = (23.439 - 0.00000036 * d) * D;
+      const ra = Math.atan2(Math.cos(e) * Math.sin(L), Math.cos(L)), dec = Math.asin(Math.sin(e) * Math.sin(L));
+      const gmst = 18.697374558 + 24.06570982441908 * d, ha = ((gmst + lon / 15) * 15) * D - ra;
+      const cd = Math.cos(dec), sd = Math.sin(dec);
+      let sU = sl * sd + cl * cd * Math.cos(ha), sE = -cd * Math.sin(ha), sN = sd * cl - cd * Math.cos(ha) * sl;
+      const beam = sU > 0 ? dni : 0;
+      let G;
+      if (m === 'tracker') {
+        const R = Math.max(-60 * D, Math.min(60 * D, Math.atan2(sE, Math.max(sU, 1e-6))));
+        G = poa([Math.sin(R), 0, Math.cos(R)], Math.cos(R), beam, dhi, ghi, sE, sN, sU);
+      } else if (m === 'fixed') G = poa(fixN, Math.cos(fb), beam, dhi, ghi, sE, sN, sU);
+      else G = (poa(ewE, Math.cos(ew), beam, dhi, ghi, sE, sN, sU) + poa(ewW, Math.cos(ew), beam, dhi, ghi, sE, sN, sU)) / 2;
+      const tc = ta + G * 25 / 800;
+      out[i] = Math.max(0, G / 1000 * (1 - 0.0035 * (tc - 25)) * 0.90);
+    }
+    return out;
+  }
+
+  // H2 made / H2 used on real daily totals, with full buffering inside each day and none between days.
+  function gDaily(dd, u) {
+    const c = 1 / u; let mx = 0; for (const v of dd) mx = Math.max(mx, v);
+    if (mx <= c) return 1;
+    const mean = g => { let t = 0; for (const v of dd) t += Math.min(g * v, c); return t / dd.length; };
+    if (mean(6) < 1) return 6;
+    let lo = 1, hi = 6; for (let i = 0; i < 40; i++) { const mid = (lo + hi) / 2; if (mean(mid) < 1) lo = mid; else hi = mid; }
+    return hi;
+  }
+  // Smallest buffer (in average hours of H2 used) that still delivers the full output, hour by hour, with the given oversizing.
+  function minBuffer(x, g, u) {
+    const c = 1 / u, n = x.length;
+    const deliver = B => { let st = 0, tot = 0; for (let pass = 0; pass < 2; pass++) { tot = 0; for (let i = 0; i < n; i++) { const a = st + g * x[i]; const mm = a < c ? a : c; st = a - mm; if (st > B) st = B; tot += mm; } } return tot / n; };
+    const top = 14 * 24 * g;
+    if (deliver(top) < 0.999) return top;
+    let lo = 0, hi = top; for (let i = 0; i < 32; i++) { const mid = (lo + hi) / 2; if (deliver(mid) >= 0.999) hi = mid; else lo = mid; }
+    return hi;
+  }
+  function refit(p) {
+    const n = p.length; let sum = 0; for (const v of p) sum += v;
+    const cf = sum / n, x = Float64Array.from(p, v => v / cf);
+    const dd = []; for (let k = 0; k + 24 <= n; k += 24) { let t = 0; for (let i = k; i < k + 24; i++) t += x[i]; dd.push(t / 24); }
+    const us = []; for (let u = Math.max(cf + 0.08, 0.35); u <= 0.9001; u += 0.05) us.push(u);
+    const real = us.map(u => gDaily(dd, u));
+    let sw = 0, best = Infinity;
+    for (let a = 0; a <= 0.95; a += 0.01) { let e = 0; us.forEach((u, i) => { const d = Math.log(oversize(u, Math.min(a, 1 / cf - 1))) - Math.log(real[i]); e += d * d; }); if (e < best) { best = e; sw = a; } }
+    const ks = [0.5, 0.6, 0.7, 0.8].filter(u => u > cf + 0.08).map(u => { const g = oversize(u, Math.min(sw, 1 / cf - 1)); return minBuffer(x, g, u) / (24 * g * (1 - cf / u)); });
+    const bk = ks.length ? ks.reduce((a, b) => a + b, 0) / ks.length : 1.3;
+    return { cf, sw, bk, kwh: sum, days: dd.length };
+  }
+  window.__refit = refit; window.__pvSeries = pvSeries;
+
+  const r1 = v => Math.round(v * 10) / 10, r2 = v => Math.round(v * 100) / 100;
+  function applySite(fit, meta) {
+    SITE = { ...meta, cf: r1(fit.cf * 100), sw: Math.round(fit.sw * 100), bk: r2(fit.bk), kwh: Math.round(fit.kwh) };
+    S.cf = SITE.cf; S.sw = SITE.sw; S.bk = SITE.bk;
+    update(); showSite();
+  }
+  function showSite(msg, err) {
+    const st = document.getElementById('siteStatus');
+    st.classList.toggle('err', !!err);
+    if (msg) { st.innerHTML = msg; return; }
+    if (SITE.builtin) { st.innerHTML = `Using <b>${esc(SITE.name)}</b>: capacity factor 25%, swing ±45%, buffer factor 1.3. Pick a place to fit these to real hourly data.`; return; }
+    const edited = S.cf !== SITE.cf || S.sw !== SITE.sw || S.bk !== SITE.bk;
+    st.innerHTML = `Using <b>${esc(SITE.name)}</b> · ${MOUNTS[SITE.mount]} · ${SITE.year} weather${SITE.kwh ? ` · ${nf(SITE.kwh, 0)} kWh/kWp DC` : ''}: capacity factor ${nf(SITE.cf, 1)}%, swing ±${SITE.sw}%, buffer factor ${nf(SITE.bk, 2)}${edited ? '. <b>Some of these were changed by hand since.</b>' : '.'}`;
+  }
+  function updateMountSeg() { document.querySelectorAll('#mountSeg button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.m === mount))); }
+
+  // The place, mounting or year changed: use a saved fit if there is one, otherwise offer to fetch.
+  function choose() {
+    const act = document.getElementById('siteAct');
+    if (!pick) { act.hidden = true; return; }
+    const saved = store.get()[siteKey(pick.lat, pick.lon, mount, year)];
+    if (saved) { act.hidden = true; applySite(saved, { name: pick.name, lat: pick.lat, lon: pick.lon, mount, year }); return; }
+    act.hidden = false;
+    document.getElementById('siteFetch').disabled = false;
+    document.getElementById('siteFetch').textContent = 'Fetch hourly solar data';
+    document.getElementById('siteHint').textContent = `${pick.name} (${pick.lat.toFixed(2)}, ${pick.lon.toFixed(2)}) isn't saved yet. This pulls one year of hourly weather and refits the profile.`;
+  }
+  async function fetchSite() {
+    if (!pick) return;
+    const btn = document.getElementById('siteFetch'), hint = document.getElementById('siteHint'), p0 = pick, m0 = mount, y0 = year;
+    btn.disabled = true; btn.textContent = 'Fetching…'; hint.textContent = '';
+    try {
+      const h = await getWeather(p0.lat, p0.lon, y0);
+      btn.textContent = 'Fitting…'; await new Promise(r => setTimeout(r, 20));
+      const fit = refit(pvSeries(h, p0.lat, p0.lon, m0));
+      if (!(fit.cf > 0.01)) throw new Error('almost no sun at this point');
+      store.put(siteKey(p0.lat, p0.lon, m0, y0), fit);
+      if (pick === p0 && mount === m0 && year === y0) { document.getElementById('siteAct').hidden = true; applySite(fit, { name: p0.name, lat: p0.lat, lon: p0.lon, mount: m0, year: y0 }); }
+    } catch (e) {
+      btn.disabled = false; btn.textContent = 'Try again';
+      hint.textContent = `Couldn't get data: ${e.message || e}. Check the connection, try another year, or set the capacity factor by hand.`;
+    }
+  }
+
+  function renderList() {
+    const ul = document.getElementById('siteList'), q = document.getElementById('siteQ');
+    const items = hits.map((h, i) => `<li role="option" data-i="${i}" aria-selected="${i === hitIdx}">${esc(h.name)}<small>${h.lat.toFixed(2)}, ${h.lon.toFixed(2)}</small></li>`);
+    if (lastQ && !/^\s*-?\d/.test(lastQ) && !hits.wide) items.push(`<li role="option" class="wide" data-i="wide" aria-selected="${hitIdx === hits.length}">${hits.length ? 'Not here? ' : 'No match. '}Search wider for “${esc(lastQ)}” (OpenStreetMap)</li>`);
+    ul.innerHTML = items.join(''); ul.hidden = !items.length; q.setAttribute('aria-expanded', String(!ul.hidden));
+  }
+  function closeList() { const ul = document.getElementById('siteList'); ul.hidden = true; document.getElementById('siteQ').setAttribute('aria-expanded', 'false'); }
+  async function runSearch(q, wide) {
+    lastQ = q;
+    if (q.trim().length < 2) { hits = []; closeList(); return; }
+    try {
+      const r = await geoSearch(q, wide);
+      if (q !== lastQ) return;
+      hits = r; hits.wide = wide; hitIdx = r.length ? 0 : -1; renderList();
+    } catch (e) { hits = []; hits.wide = wide; renderList(); showSite(`Place search failed (${esc(e.message || e)}). You can also type coordinates, e.g. 37.4, -5.9.`, true); }
+  }
+  function selectHit(i) {
+    if (i === 'wide' || i === hits.length && !hits.wide) { runSearch(lastQ, true); return; }
+    const h = hits[i]; if (!h) return;
+    pick = h; document.getElementById('siteQ').value = h.name; closeList(); choose();
+  }
+  function buildSite() {
+    const q = document.getElementById('siteQ'), ul = document.getElementById('siteList'), ys = document.getElementById('siteYear');
+    for (let y = LAST_YEAR; y >= LAST_YEAR - 9; y--) ys.insertAdjacentHTML('beforeend', `<option value="${y}">${y} weather</option>`);
+    ys.value = String(year);
+    let t = 0;
+    q.addEventListener('input', () => { clearTimeout(t); const v = q.value; t = setTimeout(() => runSearch(v, false), 300); });
+    q.addEventListener('keydown', e => {
+      const n = hits.length + (ul.querySelector('.wide') ? 1 : 0);
+      if (e.key === 'ArrowDown' && n) { e.preventDefault(); hitIdx = (hitIdx + 1) % n; renderList(); }
+      else if (e.key === 'ArrowUp' && n) { e.preventDefault(); hitIdx = (hitIdx - 1 + n) % n; renderList(); }
+      else if (e.key === 'Enter') { e.preventDefault(); clearTimeout(t); if (!ul.hidden && hitIdx >= 0) selectHit(hitIdx); else runSearch(q.value, false); }
+      else if (e.key === 'Escape') closeList();
+    });
+    ul.addEventListener('mousedown', e => { const li = e.target.closest('li'); if (!li) return; e.preventDefault(); selectHit(li.dataset.i === 'wide' ? 'wide' : +li.dataset.i); });
+    q.addEventListener('blur', () => setTimeout(closeList, 150));
+    document.querySelectorAll('#mountSeg button').forEach(b => b.addEventListener('click', () => { mount = b.dataset.m; updateMountSeg(); choose(); }));
+    ys.addEventListener('change', () => { year = +ys.value; choose(); });
+    document.getElementById('siteFetch').addEventListener('click', fetchSite);
+    updateMountSeg(); showSite();
+  }
+  function resetSite() { SITE = { ...SITE_DEF }; pick = null; mount = 'tracker'; year = LAST_YEAR; document.getElementById('siteQ').value = ''; document.getElementById('siteYear').value = String(year); document.getElementById('siteAct').hidden = true; updateMountSeg(); showSite(); }
+  const siteHash = () => SITE.builtin ? '' : `&site=${encodeURIComponent(SITE.name)}&slat=${SITE.lat}&slon=${SITE.lon}&smount=${SITE.mount}&syear=${SITE.year}${SITE.kwh ? `&skwh=${SITE.kwh}` : ''}`;
+  function readSiteHash(q) {
+    if (!q.has('site')) return;
+    const lat = +q.get('slat'), lon = +q.get('slon'), m = MOUNTS[q.get('smount')] ? q.get('smount') : 'tracker', y = +q.get('syear') || LAST_YEAR;
+    if (!isFinite(lat) || !isFinite(lon)) return;
+    SITE = { name: q.get('site'), lat, lon, mount: m, year: y, cf: S.cf, sw: S.sw, bk: S.bk, kwh: +q.get('skwh') || 0 };
+    pick = { name: SITE.name, lat, lon }; mount = m; year = y;
+  }
+
   // ---------- state in the link ----------
+  let readSiteHashLater = null;
   function readHash() {
     try {
       const h = location.hash.replace(/^#/, ''); if (!h.includes('=')) return;
       const q = new URLSearchParams(h);
       if (q.has('mu') && !q.has('auto')) S.auto = 0;   // older links carry a hand-set uptime
+      readSiteHashLater = q;
       q.forEach((v, k) => { if (!(k in S)) return; if (k === 'src') { if (v === 'DAC' || v === 'Biogenic') S.src = v; } else { const x = parseFloat(v); if (isFinite(x) && x >= 0) S[k] = x; } });
       // A scenario link is applied once. The address bar is then cleaned, so a plain reload always shows the defaults.
       history.replaceState(null, '', location.pathname + location.search);
     } catch (e) {}
   }
-  function scenarioHash() { return '#' + ALL.map(a => `${a.k}=${encodeURIComponent(S[a.k])}`).join('&') + `&auto=${S.auto ? 1 : 0}`; }
+  function scenarioHash() { return '#' + ALL.map(a => `${a.k}=${encodeURIComponent(S[a.k])}`).join('&') + `&auto=${S.auto ? 1 : 0}` + siteHash(); }
 
   let raf = 0, lastSkip = null;
-  function update(skip) { lastSkip = skip || null; optimise(); syncControls(lastSkip); cancelAnimationFrame(raf); raf = requestAnimationFrame(render); }
+  function update(skip) { lastSkip = skip || null; optimise(); syncControls(lastSkip); if (document.getElementById('siteStatus').classList.contains('err') === false) showSite(); cancelAnimationFrame(raf); raf = requestAnimationFrame(render); }
 
   document.getElementById('copyBtn').addEventListener('click', () => {
     const url = location.href.split('#')[0] + scenarioHash(), note = document.getElementById('copied');
@@ -803,6 +1026,7 @@ details.assume[open] summary::after { content: "Hide"; }
     const rows = [['E-Methane Cost export', new Date().toISOString()], ['Scenario link', location.href.split('#')[0] + scenarioHash()], []];
     rows.push(['PARAMETERS'], ['Key', 'Parameter', 'Value', 'Unit']);
     ALL.forEach(a => rows.push([a.k, a.label, num(S[a.k]), a.unit || '']));
+    rows.push(['site', 'Site', SITE.builtin ? SITE.name : `${SITE.name} (${SITE.lat}, ${SITE.lon}), ${MOUNTS[SITE.mount]}, ${SITE.year} weather, ${SITE.kwh} kWh/kWp DC`, '']);
     rows.push(['auto', 'Methanation uptime mode', S.auto ? 'auto (lowest production cost)' : 'manual', '']);
     rows.push([], ['RESULTS'], ['Metric', 'Value', 'Unit']);
     [
@@ -832,9 +1056,11 @@ details.assume[open] summary::after { content: "Hide"; }
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
   document.getElementById('csvBtn').addEventListener('click', exportCsv);
-  ['resetBtn', 'resetTop'].forEach(id => document.getElementById(id).addEventListener('click', () => { ALL.forEach(a => { S[a.k] = a.def; }); S.auto = 1; update(); }));
+  ['resetBtn', 'resetTop'].forEach(id => document.getElementById(id).addEventListener('click', () => { ALL.forEach(a => { S[a.k] = a.def; }); S.auto = 1; resetSite(); update(); }));
 
-  buildMain(); buildAssume(); readHash(); optimise(); syncControls(); render();
+  buildMain(); buildAssume(); buildSite(); readHash(); if (readSiteHashLater) readSiteHash(readSiteHashLater);
+  if (!SITE.builtin) { document.getElementById('siteQ').value = SITE.name; document.getElementById('siteYear').value = String(year); updateMountSeg(); }
+  showSite(); optimise(); syncControls(); render();
   // GitHub Pages lets a browser reuse its saved copy of this page for 10 minutes, so a new version can be missed.
   // Compare the saved copy with the server's; if they differ, reload once, keeping the current inputs.
   (async () => {
@@ -846,7 +1072,7 @@ details.assume[open] summary::after { content: "Hide"; }
         sessionStorage.setItem('emFresh', Date.now());
         // carry over only what the user changed, so everything else picks up the new defaults
         const keep = ALL.filter(a => (a.k === 'mu' ? !S.auto : S[a.k] !== a.def)).map(a => `${a.k}=${encodeURIComponent(S[a.k])}`);
-        if (keep.length) history.replaceState(null, '', '#' + keep.join('&') + `&auto=${S.auto ? 1 : 0}`);
+        if (keep.length || !SITE.builtin) history.replaceState(null, '', '#' + keep.join('&') + `&auto=${S.auto ? 1 : 0}` + siteHash());
         location.reload();
       }
     } catch (e) {}

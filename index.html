@@ -96,6 +96,12 @@ html { scroll-padding-top: calc(var(--pin-h, 0px) + 12px); }
 .row label.autochk input { margin: 0; accent-color: var(--accent); }
 .row .note { display: block; font-weight: 400; color: var(--muted); font-size: 11.5px; }
 .row .unit { color: var(--muted); font-size: 12px; }
+.capcell { grid-column: span 2; display: grid; grid-template-columns: 80px 50px; gap: 3px 12px; align-items: center; }
+.capcell .capx { grid-column: 1 / -1; font: inherit; font-size: 11.5px; color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; text-align: left; background: none; border: 0; padding: 0; }
+.capcell button.capx { cursor: pointer; text-decoration: underline dotted; text-underline-offset: 2px; }
+.capcell button.capx:hover, .capcell button.capx:focus-visible { color: var(--accent-strong); outline: none; }
+.capcell .capx b { color: var(--text); font-weight: 600; }
+.capcell .tot b { font-weight: 700; }
 input[type=range] { width: 100%; accent-color: var(--accent); height: 16px; }
 input[inputmode=decimal] { width: 100%; font: inherit; font-size: 14px; text-align: right; padding: 4px 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--panel-soft); color: var(--text); font-variant-numeric: tabular-nums; }
 input[inputmode=decimal]:hover { border-color: var(--border-strong); }
@@ -103,6 +109,7 @@ input[inputmode=decimal]:hover { border-color: var(--border-strong); }
   .row { grid-template-columns: minmax(0, 1fr) 80px 46px; gap: 4px 10px; }
   .row > :first-child { grid-column: 1 / -1; }
   .row input[type=range] { grid-column: 1; }
+  .capcell { grid-template-columns: 80px 46px; gap: 3px 10px; }
 }
 .seg { justify-self: start; display: inline-flex; border: 1px solid var(--border-strong); border-radius: 999px; padding: 3px; gap: 3px; background: var(--panel-soft); }
 .seg button { font: inherit; font-size: 13px; border: 0; background: transparent; color: var(--text); padding: 5px 14px; border-radius: 999px; cursor: pointer; }
@@ -316,7 +323,7 @@ details.assume[open] summary::after { content: "Hide"; }
           <summary>Assumptions</summary>
           <div class="agrid" id="agrid"></div>
           <div style="margin-top:14px"><button class="btn" id="resetBtn" type="button">Reset all inputs</button></div>
-          <p class="foot">Opening the page always starts from the defaults. Changes are not saved in the address bar; use Copy scenario link to keep or share a set of inputs. Real terms, pre-tax, unlevered: the IRR assumes no debt, so it is the project return before leverage. Rating bands for the unlevered IRR: under 10% weak, 10–15% OK, 15–20% good, 20–25% very good, 25% and up great. All capex in year 0, operation in years 1 to lifetime. Methane in MWh (LHV, 13.89 MWh/t). CO₂ and H₂ use are stoichiometric (CO₂ + 4 H₂ → CH₄ + 2 H₂O). Equipment costs are entered for a unit running 24/7 and each unit is then sized by its own uptime: the electrolyzer by the capacity factor, the methanation unit by the methanation uptime (never below the capacity factor). When methanation runs more hours than the electrolyzer, an H₂ buffer covers the gap; it is sized at the buffer size factor × an average day of H₂ × (1 − capacity factor / methanation uptime). Solar output is modelled as a sine wave over the year (the seasonal swing, automatically flattened as the capacity factor nears 100%). The defaults (25%, ±45%, 1.3) come from a synthetic tracker profile for southern Spain. Pick a site to replace them: the page fetches one year of hourly irradiance and temperature for that point, turns it into DC output per kWp for the chosen mounting (single-axis tracker limited to ±60°, fixed tilt facing the equator, or east-west at 10°; isotropic sky, 0.2 albedo, 10% DC losses, −0.35%/°C), with the electrolyzer following the array one to one. The capacity factor is the yearly mean; the seasonal swing is the sine amplitude that best reproduces venting on the real daily totals; the buffer factor is the smallest buffer that still delivers the full output in an hourly simulation, averaged over uptimes of 50–80%. It is a rough fit on one weather year, not a bankable yield study. Solar data via Open-Meteo, CC BY 4.0: irradiance from the EUMETSAT CM SAF SARAH-3 satellite record, the dataset PVGIS uses, wherever it covers the point (Europe, Africa, the Middle East, eastern South America); elsewhere, and for air temperature, from ERA5 reanalysis (Copernicus/ECMWF), which can read 5–10% off. The status line says which was used. Place search: Open-Meteo geocoding (GeoNames) and OpenStreetMap Nominatim (© OpenStreetMap contributors). Picking a place first shows the fitted results of the nearest of about 330 stored points worldwide (2025 data, marked ~), then fetches the exact data for the point in the background and swaps it in. Fetched sites are saved in this browser. On summer days when the electrolyzer makes more H₂ than the methanation unit can take, the surplus is vented and the electrolyzer is enlarged to make up for it, so pushing uptime too high costs more H₂ plant. With Auto ticked, the methanation uptime is reset to the value with the lowest production cost every time an input changes; moving the uptime slider switches Auto off. Hydrogen cost is per kg delivered to methanation, after venting. All power is bought at the solar price, including methanation power outside solar hours and DAC power when the CO₂ source is DAC. With DAC as the CO₂ source, CO₂ comes off the electrolyzer in step with the H₂, so a CO₂ buffer of 5.46 kg per kg of H₂ buffered is added, and DAC power and CO₂ cost also cover the CO₂ vented with the H₂ in summer. Biogenic CO₂ is assumed delivered as needed, with no buffer. The H₂ plant is costed in USD and converted at the exchange rate. Stacks are replaced when cumulative run hours pass the replacement interval.</p>
+          <p class="foot">Opening the page always starts from the defaults. Changes are not saved in the address bar; use Copy scenario link to keep or share a set of inputs. Real terms, pre-tax, unlevered: the IRR assumes no debt, so it is the project return before leverage. Rating bands for the unlevered IRR: under 10% weak, 10–15% OK, 15–20% good, 20–25% very good, 25% and up great. All capex in year 0, operation in years 1 to lifetime. Methane in MWh (LHV, 13.89 MWh/t). CO₂ and H₂ use are stoichiometric (CO₂ + 4 H₂ → CH₄ + 2 H₂O). Equipment costs are entered for a unit running 24/7 and each unit is then sized by its own uptime: the electrolyzer by the capacity factor, the methanation unit by the methanation uptime (never below the capacity factor). When methanation runs more hours than the electrolyzer, an H₂ buffer covers the gap; it is sized at the buffer size factor × an average day of H₂ × (1 − capacity factor / methanation uptime). H₂ plant capex is the stack plus the H₂ systems (power supply, gas separation and purification, compressor, water treatment and cooling, installation), each in $/kW of electrolyzer. H₂ leaves the stacks at atmospheric pressure and one compressor lifts it to the buffer pressure, or straight to the methanation pressure when there is no buffer. Compressor cost and compression energy are entered for 30 bar and scale with the delivery pressure (energy with ln of the pressure, cost with that to the power 0.7). The buffer can only be drawn down to the methanation pressure plus 2 bar, so the tank is sized, and paid for, at usable H₂ ÷ (1 − (methanation pressure + 2) ÷ buffer pressure). Methanation capex is entered for a 10 bar unit: 45% of it (reactor, heat exchangers, piping) scales with (10 ÷ pressure)^0.3 and a pressure-rating factor of 1.2% per bar above 5 bar, a rough rule, not a quote. CO₂ compression is not costed separately, and compressing the methane for delivery sits in Logistics. Solar output is modelled as a sine wave over the year (the seasonal swing, automatically flattened as the capacity factor nears 100%). The defaults (25%, ±45%, 1.3) come from a synthetic tracker profile for southern Spain. Pick a site to replace them: the page fetches one year of hourly irradiance and temperature for that point, turns it into DC output per kWp for the chosen mounting (single-axis tracker limited to ±60°, fixed tilt facing the equator, or east-west at 10°; isotropic sky, 0.2 albedo, 10% DC losses, −0.35%/°C), with the electrolyzer following the array one to one. The capacity factor is the yearly mean; the seasonal swing is the sine amplitude that best reproduces venting on the real daily totals; the buffer factor is the smallest buffer that still delivers the full output in an hourly simulation, averaged over uptimes of 50–80%. It is a rough fit on one weather year, not a bankable yield study. Solar data via Open-Meteo, CC BY 4.0: irradiance from the EUMETSAT CM SAF SARAH-3 satellite record, the dataset PVGIS uses, wherever it covers the point (Europe, Africa, the Middle East, eastern South America); elsewhere, and for air temperature, from ERA5 reanalysis (Copernicus/ECMWF), which can read 5–10% off. The status line says which was used. Place search: Open-Meteo geocoding (GeoNames) and OpenStreetMap Nominatim (© OpenStreetMap contributors). Picking a place first shows the fitted results of the nearest of about 330 stored points worldwide (2025 data, marked ~), then fetches the exact data for the point in the background and swaps it in. Fetched sites are saved in this browser. On summer days when the electrolyzer makes more H₂ than the methanation unit can take, the surplus is vented and the electrolyzer is enlarged to make up for it, so pushing uptime too high costs more H₂ plant. With Auto ticked, the methanation uptime is reset to the value with the lowest production cost every time an input changes; moving the uptime slider switches Auto off. Hydrogen cost is per kg delivered to methanation, after venting. All power is bought at the solar price, including methanation power outside solar hours and DAC power when the CO₂ source is DAC. With DAC as the CO₂ source, CO₂ comes off the electrolyzer in step with the H₂, so a CO₂ buffer of 5.46 kg per kg of H₂ buffered is added, and DAC power and CO₂ cost also cover the CO₂ vented with the H₂ in summer. Biogenic CO₂ is assumed delivered as needed, with no buffer. The H₂ plant is costed in USD and converted at the exchange rate. Stacks are replaced when cumulative run hours pass the replacement interval, at the replacement cost as a share of the stack capex. Scenario links made before the stack and systems split carried one total H₂ plant capex; they open with the stack set to that total minus the current systems cost.</p>
         </details>
       </section>
     </div>
@@ -346,7 +353,7 @@ details.assume[open] summary::after { content: "Hide"; }
     { k: 'cc', g: 'co2', label: 'CO₂ cost', note: 'excluding DAC power', unit: '€/t', min: 0, max: 400, step: 5, def: 130, dp: 0 },
     { k: 'pw', g: 'h2', label: 'Power price', unit: '$/MWh', min: 0, max: 100, step: 1, def: 20, dp: 1 },
     { k: 'cf', g: 'h2', label: 'Capacity factor', note: 'sets run hours and plant size', unit: '%', min: 5, max: 100, step: 1, def: 25, dp: 0 },
-    { k: 'h2c', g: 'h2', label: 'H₂ plant capex', note: 'total installed', unit: '$/kW', min: 100, max: 2500, step: 10, def: 400, dp: 0 },
+    { k: 'stk', g: 'h2', label: 'H₂ stack capex', note: 'stack only; systems are set in Assumptions', unit: '$/kW', min: 20, max: 1500, step: 10, def: 160, dp: 0 },
     { k: 'mu', g: 'meth', label: 'Methanation uptime', unit: '%', min: 5, max: 100, step: 1, def: 65, dp: 0 },
     { k: 'wacc', g: 'fin', label: 'Cost of capital (WACC)', unit: '%', min: 2, max: 20, step: 0.5, def: 7, dp: 1 },
     { k: 'price', g: 'off', label: 'Off-take price', note: 'per MWh of e-methane', unit: '€/MWh', min: 40, max: 400, step: 5, def: 180, dp: 0 },
@@ -357,16 +364,24 @@ details.assume[open] summary::after { content: "Hide"; }
     { k: 'fx', label: 'Exchange rate', unit: 'USD per EUR', def: 1.15, min: 0.5, max: 2, step: 0.01 },
     { head: 'Electrolyzer' },
     { k: 'sec', label: 'Specific energy', unit: 'kWh/kg H₂, system level', def: 60, min: 30, max: 80, step: 0.5 },
-    { k: 'ce', label: 'Compression energy', unit: 'kWh/kg H₂', def: 2, min: 0, max: 10, step: 0.1 },
-    { k: 'om', label: 'H₂ plant fixed O&M', unit: '% of H₂ plant capex per year', def: 3, min: 0, max: 10, step: 0.1 },
+    { k: 'ce', label: 'Compression energy at 30 bar', unit: 'kWh/kg H₂, from atmospheric; scales with the delivery pressure', def: 2, min: 0, max: 10, step: 0.1 },
+    { k: 'om', label: 'H₂ plant fixed O&M', unit: '% of H₂ plant capex (stack + systems) per year', def: 3, min: 0, max: 10, step: 0.1 },
     { k: 'ri', label: 'Stack replacement interval', unit: 'run hours', def: 80000, min: 10000, max: 200000, step: 1000 },
-    { k: 'rc', label: 'Stack replacement cost', unit: '% of H₂ plant capex', def: 40, min: 0, max: 100, step: 1 },
+    { k: 'rc', label: 'Stack replacement cost', unit: '% of H₂ stack capex', def: 100, min: 0, max: 200, step: 1 },
     { k: 'wl', label: 'Water use', unit: 'L/kg H₂', def: 10, min: 0, max: 40, step: 0.5 },
     { k: 'wp', label: 'Water cost', unit: '$/m³', def: 2, min: 0, max: 20, step: 0.1 },
+    { head: 'H₂ systems (balance of plant)', id: 'bopHead' },
+    { k: 'bps', label: 'Power supply', unit: '$/kW; transformer and rectifier', def: 60, min: 0, max: 1000, step: 5 },
+    { k: 'bgs', label: 'Gas separation and purification', unit: '$/kW; gas–liquid separation, deoxo, drying', def: 40, min: 0, max: 1000, step: 5 },
+    { k: 'bcp', label: 'H₂ compressor at 30 bar', unit: '$/kW installed, from atmospheric; scales with the delivery pressure', def: 60, min: 0, max: 1000, step: 5 },
+    { k: 'bwc', label: 'Water treatment and cooling', unit: '$/kW', def: 20, min: 0, max: 1000, step: 5 },
+    { k: 'bin', label: 'Installation and engineering', unit: '$/kW; civils, piping, electrical, EPC', def: 60, min: 0, max: 2000, step: 5 },
     { head: 'Methanation and other' },
-    { k: 'mc', label: 'Methanation capex', unit: '€ per MWh/yr of capacity, for a unit running 24/7', def: 180, min: 0, max: 1000, step: 5 },
+    { k: 'pr', label: 'Methanation pressure', unit: 'bar; methanation capex is entered for 10 bar', def: 10, min: 1, max: 100, step: 1 },
+    { k: 'pb', label: 'H₂ buffer pressure', unit: 'bar, when full; the compressor delivers this', def: 30, min: 2, max: 300, step: 1 },
+    { k: 'mc', label: 'Methanation capex', unit: '€ per MWh/yr of capacity, for a 10 bar unit running 24/7', def: 180, min: 0, max: 1000, step: 5 },
     { k: 'mom', label: 'Methanation fixed O&M', unit: '% of methanation capex per year', def: 2, min: 0, max: 15, step: 0.1 },
-    { k: 'bc', label: 'H₂ buffer storage', unit: '€ per kg H₂ stored, installed', def: 700, min: 0, max: 5000, step: 10 },
+    { k: 'bc', label: 'H₂ buffer storage', unit: '€ per kg H₂ the tank holds when full, installed', def: 700, min: 0, max: 5000, step: 10 },
     { k: 'cbc', label: 'CO₂ buffer storage', unit: '€ per kg CO₂ stored, installed; used when source is DAC', def: 30, min: 0, max: 500, step: 1 },
     { k: 'sw', label: 'Seasonal swing in solar output', unit: '± % around the yearly average; set by the site', def: 45, min: 0, max: 90, step: 1 },
     { k: 'bk', label: 'H₂ buffer size factor', unit: '× an average day of H₂ × (1 − capacity factor / uptime); set by the site', def: 1.3, min: 0, max: 50, step: 0.05 },
@@ -417,10 +432,26 @@ details.assume[open] summary::after { content: "Hide"; }
     const h2t = out * H2_PER / 1000;             // t H2 used per year
     const h2made = h2t * g;                      // t H2 made per year
     const elecMW = h2made * s.sec / hours;
-    const h2CapEUR = elecMW * 1000 * s.h2c / fx;
-    const methCapEUR = s.mc * methCap;
-    const bufKg = s.bk * h2made * 1000 / 365 * (1 - cf / u);
-    const bufCapEUR = bufKg * s.bc;
+    const bufKg = s.bk * h2made * 1000 / 365 * (1 - cf / u);   // H2 the buffer must be able to give back
+    // Pressures. The compressor takes H2 from atmospheric to the buffer pressure (to the methanation pressure when there is no buffer).
+    // Compression work and energy follow ln(pressure), anchored at 30 bar; compressor cost follows work^0.7.
+    const pr = Math.max(1, s.pr), hasBuf = bufKg > 0.5;
+    const pd = Math.max(1.5, hasBuf ? Math.max(s.pb, pr) : pr);
+    const pf = Math.log(pd) / Math.log(30);
+    const ceE = s.ce * pf;                       // kWh/kg at the delivery pressure
+    const cmpKW = s.bcp * Math.pow(pf, 0.7);     // $/kW at the delivery pressure
+    const bopKW = s.bps + s.bgs + cmpKW + s.bwc + s.bin, h2kW = s.stk + bopKW;
+    const stackCapEUR = elecMW * 1000 * s.stk / fx, bopCapEUR = elecMW * 1000 * bopKW / fx;
+    const h2CapEUR = stackCapEUR + bopCapEUR;
+    // The buffer only empties down to the methanation pressure plus 2 bar, so the tank holds more than it can give back.
+    const bufUse = hasBuf ? Math.max(0.05, 1 - (pr + 2) / pd) : 1;
+    const bufStore = bufKg / bufUse;
+    const bufCapEUR = bufStore * s.bc;
+    // Methanation unit cost against a 10 bar unit: 45% of it (reactor, heat exchangers, piping) grows as pressure falls
+    // (more gas volume) and with the pressure rating; the rest does not depend on pressure.
+    const rating = p => 1 + 0.012 * Math.max(p - 5, 0);
+    const methF = 0.55 + 0.45 * Math.pow(10 / pr, 0.3) * rating(pr) / rating(10);
+    const methCapEUR = s.mc * methCap * methF;
     // DAC CO2 comes off the same electrolyzer, in step with the H2, so it needs a buffer in the same proportion (5.46 kg CO2 per kg H2).
     const isDac = s.src === 'DAC';
     const co2BufKg = isDac ? bufKg * 44.01 / (4 * 2.016) : 0;
@@ -430,17 +461,17 @@ details.assume[open] summary::after { content: "Hide"; }
     const ann = r === 0 ? n : (1 - Math.pow(1 + r, -n)) / r;
     const kgPerKW = hours / s.sec / g;           // kg H2 delivered per kW per year
     const repl = [0];
-    for (let t = 1; t <= n; t++) repl.push(t < n && Math.floor(t * hours / s.ri) > Math.floor((t - 1) * hours / s.ri) ? s.rc / 100 * h2CapEUR : 0);
+    for (let t = 1; t <= n; t++) repl.push(t < n && Math.floor(t * hours / s.ri) > Math.floor((t - 1) * hours / s.ri) ? s.rc / 100 * stackCapEUR : 0);
     let pvRepl = 0; for (let t = 1; t <= n; t++) pvRepl += repl[t] / Math.pow(1 + r, t);
     const lc = {
-      elec: (s.sec + s.ce) * g * s.pw / 1000,
-      capex: s.h2c / ann / kgPerKW,
-      om: s.om / 100 * s.h2c / kgPerKW,
+      elec: (s.sec + ceE) * g * s.pw / 1000,
+      capex: h2kW / ann / kgPerKW, capStack: s.stk / ann / kgPerKW, capBop: bopKW / ann / kgPerKW,
+      om: s.om / 100 * h2kW / kgPerKW,
       water: s.wl * g * s.wp / 1000,
       repl: h2t > 0 ? pvRepl * fx / (h2t * 1000 * ann) : 0,
     };
     const lcoh = lc.elec + lc.capex + lc.om + lc.water + lc.repl;
-    const elecG = h2made * (s.sec + s.ce) / 1000, methG = out / 1000 * s.mp, dacG = isDac ? co2made * s.dac / 1000 : 0;
+    const elecG = h2made * (s.sec + ceE) / 1000, methG = out / 1000 * s.mp, dacG = isDac ? co2made * s.dac / 1000 : 0;
     const powG = elecG + methG + dacG;
     const instMW = powG * 1000 / hours;
     const per = {
@@ -458,7 +489,7 @@ details.assume[open] summary::after { content: "Hide"; }
     per.capex = lcom - opex;
     per.capH2 = (h2CapEUR + pvRepl) / (out * ann); per.capMeth = methCapEUR / (out * ann); per.capBuf = (bufCapEUR + co2BufCapEUR) / (out * ann);
     const yr1 = out * (s.price - opex);
-    return { out, hours, u, vent, g, methCap, methMW, methHours: 8760 * u, h2t, h2made, elecMW, h2CapEUR, methCapEUR, bufKg, bufCapEUR, co2BufKg, co2BufCapEUR, co2made, isDac, ann, pvRepl, capex, lc, lcoh, powG, elecG, methG, dacG, instMW, per, opex, cfs, irr: irrV, npv, lcom, payback: yr1 > 0 ? capex / yr1 : Infinity, r, n, repl };
+    return { out, hours, u, vent, g, methCap, methMW, methHours: 8760 * u, h2t, h2made, elecMW, h2CapEUR, stackCapEUR, bopCapEUR, bopKW, cmpKW, h2kW, ceE, pr, pd, hasBuf, bufUse, bufStore, methF, methCapEUR, bufKg, bufCapEUR, co2BufKg, co2BufCapEUR, co2made, isDac, ann, pvRepl, capex, lc, lcoh, powG, elecG, methG, dacG, instMW, per, opex, cfs, irr: irrV, npv, lcom, payback: yr1 > 0 ? capex / yr1 : Infinity, r, n, repl };
   }
   window.__model = model;
   // Lowest-cost methanation uptime, to the nearest 1%. Coarse scan, then a fine scan around the best point: about 30 model runs.
@@ -507,6 +538,14 @@ details.assume[open] summary::after { content: "Hide"; }
         rng.addEventListener('input', () => { S[a.k] = fromSlider(a, rng.value); if (a.k === 'mu') S.auto = 0; update(rng); });
         num.addEventListener('input', () => { const v = parseNum(num.value); if (isFinite(v) && v >= 0) { S[a.k] = v; if (a.k === 'mu') S.auto = 0; update(num); } });
         num.addEventListener('blur', () => syncControls());
+        if (a.k === 'stk') {
+          const cell = document.createElement('div'); cell.className = 'capcell';
+          const unit = row.lastElementChild; row.replaceChild(cell, num); row.removeChild(unit);
+          cell.innerHTML = '<button type="button" class="capx" id="bopLine" title="Open the H₂ systems inputs in Assumptions"></button>';
+          cell.append(num, unit);
+          cell.insertAdjacentHTML('beforeend', '<span class="capx tot" id="h2TotLine"></span>');
+          cell.querySelector('#bopLine').addEventListener('click', () => { document.getElementById('assume').open = true; document.getElementById('bopHead').scrollIntoView({ behavior: 'smooth', block: 'center' }); });
+        }
         if (a.k === 'mu') {
           const cell = document.createElement('div'); cell.className = 'lbl';
           const lab = row.firstElementChild; row.replaceChild(cell, lab); cell.appendChild(lab);
@@ -520,11 +559,11 @@ details.assume[open] summary::after { content: "Hide"; }
   function buildAssume() {
     const g = document.getElementById('agrid');
     ASSUME.forEach(a => {
-      if (a.head) { const h = document.createElement('div'); h.className = 'group-label ahead'; h.textContent = a.head; g.appendChild(h); return; }
+      if (a.head) { const h = document.createElement('div'); h.className = 'group-label ahead'; h.textContent = a.head; if (a.id) h.id = a.id; g.appendChild(h); return; }
       const f = document.createElement('div'); f.className = 'afield';
       f.innerHTML = `<label for="a-${a.k}">${esc(a.label)}</label><input type="text" id="a-${a.k}" inputmode="decimal" autocomplete="off"><span class="unit">${esc(a.unit)}</span>`;
       const inp = f.querySelector('input');
-      inp.addEventListener('input', () => { const v = parseNum(inp.value); if (isFinite(v) && v >= 0 && !(a.k === 'life' && v < 1) && !(['sec', 'ri', 'fx'].includes(a.k) && v <= 0)) { S[a.k] = v; update(inp); } });
+      inp.addEventListener('input', () => { const v = parseNum(inp.value); if (isFinite(v) && v >= 0 && !(a.k === 'life' && v < 1) && !(['sec', 'ri', 'fx'].includes(a.k) && v <= 0) && !(a.k === 'pr' && v < 1) && !(a.k === 'pb' && v < 2)) { S[a.k] = v; update(inp); } });
       inp.addEventListener('blur', () => syncControls());
       g.appendChild(f);
     });
@@ -620,7 +659,7 @@ details.assume[open] summary::after { content: "Hide"; }
       { n: 'CO₂', c: '--c-co2', parts: m.isDac
         ? [P('DAC cost, excluding power', m.per.co2), P('DAC power', m.dacG * 1000 / m.out * pw), P('CO₂ buffer', m.co2BufCapEUR / d, 1)]
         : [P('Purchased CO₂', m.per.co2)] },
-      { n: 'H₂', c: '--c-h2', parts: [P('Electricity', m.elecG * 1000 / m.out * pw), P('H₂ plant', m.h2CapEUR / d, 1), P('Stack replacement', m.pvRepl / d, 1),
+      { n: 'H₂', c: '--c-h2', parts: [P('Electricity', m.elecG * 1000 / m.out * pw), P('H₂ stack', m.stackCapEUR / d, 1), P('H₂ systems', m.bopCapEUR / d, 1), P('Stack replacement', m.pvRepl / d, 1),
         P('H₂ buffer', m.bufCapEUR / d, 1), P('Fixed O&M', S.om / 100 * m.h2CapEUR / m.out), P('Water', m.h2made * S.wl * S.wp / S.fx / m.out)] },
       { n: 'Methanation', c: '--c-meth', parts: [P('Methanation unit', m.methCapEUR / d, 1), P('Fixed O&M', S.mom / 100 * m.methCapEUR / m.out),
         P('Catalyst and utilities', S.vrc), P('Power', m.methG * 1000 / m.out * pw)] },
@@ -703,13 +742,15 @@ details.assume[open] summary::after { content: "Hide"; }
     const lcohTxt = `$${nf(m.lcoh, 2)}`;
     document.getElementById('lcoh').innerHTML = `${lcohTxt}<small>/kg</small>`;
     const lcItems = [
-      { n: 'Electricity', v: m.lc.elec, c: '--s-power' }, { n: 'Capex', v: m.lc.capex, c: '--s-capex' },
+      { n: 'Electricity', v: m.lc.elec, c: '--s-power' }, { n: 'Stack capex', v: m.lc.capStack, c: '--s-capex' }, { n: 'Systems capex', v: m.lc.capBop, c: '--s-logi' },
       { n: 'Stack replacement', v: m.lc.repl, c: '--s-react' }, { n: 'Fixed O&M', v: m.lc.om, c: '--s-h2om' }, { n: 'Water', v: m.lc.water, c: '--s-co2' },
     ];
     drawStack('lcohStack', 'lcohLegend', lcItems, Math.max(m.lcoh, 1e-9), v => `$${nf(v, 2)}`, false);
 
     const [mv, mu2] = mw(m.methMW);
-    document.getElementById('methInline').textContent = `${mv} ${mu2}` + (m.bufKg >= 0.5 ? ` + ${nf(m.bufKg, 0)} kg H₂` + (m.isDac ? ` + ${nf(m.co2BufKg / 1000, 1)} t CO₂` : '') : ', no buffer') + (m.vent > 0.0005 ? `, ${nf(m.vent * 100, 1)}% of H₂ vented` : '');
+    document.getElementById('methInline').textContent = `${mv} ${mu2}` + (m.hasBuf && S.pb < m.pr + 3 ? ' · buffer pressure too close to methanation pressure' : '') + (m.bufKg >= 0.5 ? ` + ${nf(m.bufKg, 0)} kg H₂` + (m.isDac ? ` + ${nf(m.co2BufKg / 1000, 1)} t CO₂` : '') : ', no buffer') + (m.vent > 0.0005 ? `, ${nf(m.vent * 100, 1)}% of H₂ vented` : '');
+    document.getElementById('bopLine').innerHTML = `+ systems <b>$${nf(m.bopKW, 0)}</b>/kW`;
+    document.getElementById('h2TotLine').innerHTML = `= total <b>$${nf(m.h2kW, 0)}</b>/kW`;
     const [pv, pu] = mw(m.instMW); document.getElementById('kPower').innerHTML = `${pv}<small>${pu}</small>`;
     document.getElementById('kCapex').textContent = eurM(m.capex);
     const pill = document.getElementById('kIrrPill');
@@ -728,12 +769,15 @@ details.assume[open] summary::after { content: "Hide"; }
       ['Production cost (LCOM)', `€${nf(m.lcom, 2)}/MWh`],
       ['Simple payback', isFinite(m.payback) ? `${nf(m.payback, 1)} years` : 'never'],
       ['Electrolyzer size', `${ev} ${eu}`],
-      ['H₂ plant capex', eurM(m.h2CapEUR)],
+      ['H₂ stack capex', eurM(m.stackCapEUR)],
+      ['H₂ systems capex', `${eurM(m.bopCapEUR)}, $${nf(m.bopKW, 0)}/kW`],
+      ['  of which compressor', `$${nf(m.cmpKW, 0)}/kW to ${nf(m.pd, 0)} bar`],
       ['Electrolyzer run hours', `${nf(m.hours, 0)} h/yr`],
-      ['Methanation size', `${mv} ${mu2} CH₄`],
+      ['Methanation size', `${mv} ${mu2} CH₄ at ${nf(m.pr, 0)} bar`],
       ['Methanation capex', eurM(m.methCapEUR)],
       ['Methanation run hours', `${nf(m.methHours, 0)} h/yr`],
-      ['H₂ buffer', m.bufKg >= 0.5 ? `${nf(m.bufKg, 0)} kg, ${eurM(m.bufCapEUR)}` : 'none'],
+      ['H₂ buffer', m.bufKg >= 0.5 ? `${nf(m.bufKg, 0)} kg usable, ${eurM(m.bufCapEUR)}` : 'none'],
+      ...(m.bufKg >= 0.5 ? [['  tank holds', `${nf(m.bufStore, 0)} kg at ${nf(m.pd, 0)} bar`]] : []),
       ...(m.isDac ? [['CO₂ buffer', m.co2BufKg >= 0.5 ? `${nf(m.co2BufKg / 1000, 1)} t, ${eurM(m.co2BufCapEUR)}` : 'none']] : []),
       ['H₂ demand', `${nf(m.h2t, 0)} t/yr`],
       [m.isDac ? 'H₂ and CO₂ vented in summer' : 'H₂ vented in summer', `${nf(m.vent * 100, 1)}%`],
@@ -1073,6 +1117,10 @@ details.assume[open] summary::after { content: "Hide"; }
       if (q.has('mu') && !q.has('auto')) S.auto = 0;   // older links carry a hand-set uptime
       readSiteHashLater = q;
       q.forEach((v, k) => { if (!(k in S)) return; if (k === 'src') { if (v === 'DAC' || v === 'Biogenic') S.src = v; } else { const x = parseFloat(v); if (isFinite(x) && x >= 0) S[k] = x; } });
+      if (q.has('h2c') && !q.has('stk')) {
+        const tot = parseFloat(q.get('h2c')), rcOld = q.has('rc') ? parseFloat(q.get('rc')) : 40;
+        if (isFinite(tot) && tot >= 0) { S.stk = Math.max(0, Math.round(tot - model(S).bopKW)); S.rc = S.stk > 0 && isFinite(rcOld) ? Math.round(rcOld * tot / S.stk * 10) / 10 : 100; }
+      }
       // A scenario link is applied once. The address bar is then cleaned, so a plain reload always shows the defaults.
       history.replaceState(null, '', location.pathname + location.search);
     } catch (e) {}
@@ -1103,14 +1151,14 @@ details.assume[open] summary::after { content: "Hide"; }
       ['Simple payback', isFinite(m.payback) ? m.payback : 'never', 'years'],
       ['E-methane output', m.out, 'MWh/yr'], ['Methanation capacity at 24/7', m.methCap, 'MWh/yr'], ['Methanation size', m.methMW, 'MW CH4'],
       ['Methanation uptime used', m.u * 100, '%'], ['Methanation run hours', m.methHours, 'h/yr'],
-      ['H2 buffer', m.bufKg, 'kg'], ['H2 buffer capex', m.bufCapEUR, '€'], ['CO2 buffer (DAC only)', m.co2BufKg, 'kg'], ['CO2 buffer capex', m.co2BufCapEUR, '€'], ['CO2 captured', m.co2made, 't/yr'], ['H2 vented in summer', m.vent * 100, '% of H2 made'], ['H2 made', m.h2made, 't/yr'],
+      ['H2 buffer, usable', m.bufKg, 'kg'], ['H2 buffer, tank holds when full', m.bufStore, 'kg'], ['H2 delivery pressure', m.pd, 'bar'], ['H2 buffer capex', m.bufCapEUR, '€'], ['CO2 buffer (DAC only)', m.co2BufKg, 'kg'], ['CO2 buffer capex', m.co2BufCapEUR, '€'], ['CO2 captured', m.co2made, 't/yr'], ['H2 vented in summer', m.vent * 100, '% of H2 made'], ['H2 made', m.h2made, 't/yr'],
       ['Installed power', m.instMW, 'MW'], ['Electrolyzer size', m.elecMW, 'MW'],
-      ['Total capex', m.capex, '€'], ['H2 plant capex', m.h2CapEUR, '€'], ['Methanation capex', m.methCapEUR, '€'],
+      ['Total capex', m.capex, '€'], ['H2 plant capex', m.h2CapEUR, '€'], ['  of which stack', m.stackCapEUR, '€'], ['  of which systems', m.bopCapEUR, '€'], ['H2 plant capex per kW', m.h2kW, '$/kW'], ['  of which systems', m.bopKW, '$/kW'], ['  of which compressor at delivery pressure', m.cmpKW, '$/kW'], ['Compression energy at delivery pressure', m.ceE, 'kWh/kg H2'], ['Methanation capex', m.methCapEUR, '€'], ['Methanation capex factor for pressure', m.methF, '× the 10 bar cost'],
       ['H2 demand (used)', m.h2t, 't/yr'], ['Power use', m.powG, 'GWh/yr'], ['  of which electrolysis + compression', m.elecG, 'GWh/yr'],
       ['  of which methanation', m.methG, 'GWh/yr'], ['  of which DAC', m.dacG, 'GWh/yr'], ['Electrolyzer run hours', m.hours, 'h/yr'],
     ].forEach(r => rows.push([r[0], num(r[1]), r[2]]));
     rows.push([], ['LCOH BREAKDOWN', '', '$/kg H2']);
-    [['Electricity', m.lc.elec], ['Capex', m.lc.capex], ['Stack replacement', m.lc.repl], ['Fixed O&M', m.lc.om], ['Water', m.lc.water]].forEach(r => rows.push([r[0], num(r[1])]));
+    [['Electricity', m.lc.elec], ['Stack capex', m.lc.capStack], ['Systems capex', m.lc.capBop], ['Stack replacement', m.lc.repl], ['Fixed O&M', m.lc.om], ['Water', m.lc.water]].forEach(r => rows.push([r[0], num(r[1])]));
     rows.push([], ['PRODUCTION COST BREAKDOWN', '', '€/MWh CH4']);
     costCats(m).forEach(c => { rows.push([c.n, num(c.v), `${Math.round(100 * c.v / m.lcom)}% of cost`, c.cap > 0 ? `${Math.round(100 * c.cap / c.v)}% capital` : '']); c.parts.forEach(p => rows.push(['  ' + p.n + (p.cap ? ' (capital)' : ''), num(p.v)])); });
     rows.push([], ['CASH FLOW', '', '€'], ['Year', 'Net cash flow', 'Stack replacement', 'Cumulative']);

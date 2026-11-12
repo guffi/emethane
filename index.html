@@ -246,6 +246,10 @@ details.assume[open] summary::after { content: "Hide"; }
 .site-act { margin-top: 8px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 .btn.primary { background: var(--accent); color: #fff; border-color: var(--accent); font-weight: 600; }
 .btn.primary:disabled { opacity: .6; cursor: progress; }
+.optres { margin: 8px 0 4px; padding: 9px 12px; border-radius: 6px; background: var(--accent-soft); color: var(--text); font-size: 13px; line-height: 1.5; }
+.optres b { font-variant-numeric: tabular-nums; }
+.optres .btn { padding: 3px 9px; font-size: 12.5px; margin-left: 6px; vertical-align: 1px; }
+.optres.warn { background: var(--warn-soft); }
 .foot { color: var(--muted); font-size: 12.5px; margin-top: 18px; max-width: 80ch; }
 @media (prefers-reduced-motion: no-preference) { .stack span { transition: flex-basis .25s ease; } }
 </style>
@@ -282,7 +286,8 @@ details.assume[open] summary::after { content: "Hide"; }
   <div class="layout">
     <div class="main">
       <section class="panel o-inputs" aria-labelledby="h-inputs">
-        <h2 id="h-inputs">Main inputs</h2>
+        <div class="panel-head"><h2 id="h-inputs">Main inputs</h2><button class="btn primary" id="optBtn" type="button" title="Searches mounting, solar oversizing and methanation uptime for the lowest production cost. Prices, capex and finance stay as set.">Find lowest cost</button></div>
+        <div class="optres" id="optRes" hidden></div>
         <div class="group-label">Site and solar profile</div>
         <div class="site" id="site">
           <div class="site-row">
@@ -323,7 +328,7 @@ details.assume[open] summary::after { content: "Hide"; }
           <summary>Assumptions</summary>
           <div class="agrid" id="agrid"></div>
           <div style="margin-top:14px"><button class="btn" id="resetBtn" type="button">Reset all inputs</button></div>
-          <p class="foot">Opening the page always starts from the defaults. Changes are not saved in the address bar; use Copy scenario link to keep or share a set of inputs. Real terms, pre-tax, unlevered: the IRR assumes no debt, so it is the project return before leverage. Rating bands for the unlevered IRR: under 10% weak, 10–15% OK, 15–20% good, 20–25% very good, 25% and up great. All capex in year 0, operation in years 1 to lifetime. Methane in MWh (LHV, 13.89 MWh/t). CO₂ and H₂ use are stoichiometric (CO₂ + 4 H₂ → CH₄ + 2 H₂O). Equipment costs are entered for a unit running 24/7 and each unit is then sized by its own uptime: the electrolyzer by the capacity factor, the methanation unit by the methanation uptime (never below the capacity factor). When methanation runs more hours than the electrolyzer, an H₂ buffer covers the gap; it is sized at the buffer size factor × an average day of H₂ × (1 − capacity factor / methanation uptime). H₂ plant capex is the stack plus the H₂ systems (power supply, gas separation and purification, compressor, water treatment and cooling, installation), each in $/kW of electrolyzer. H₂ leaves the stacks at atmospheric pressure and one compressor lifts it to the buffer pressure, or straight to the methanation pressure when there is no buffer. Compressor cost and compression energy are entered for 30 bar and scale with the delivery pressure (energy with ln of the pressure, cost with that to the power 0.7). The buffer can only be drawn down to the methanation pressure plus 2 bar, so the tank is sized, and paid for, at usable H₂ ÷ (1 − (methanation pressure + 2) ÷ buffer pressure). Methanation capex is entered for a 10 bar unit: 45% of it (reactor, heat exchangers, piping) scales with (10 ÷ pressure)^0.3 and a pressure-rating factor of 1.2% per bar above 5 bar, a rough rule, not a quote. CO₂ compression is not costed separately, and compressing the methane for delivery sits in Logistics. Solar output is modelled as a sine wave over the year (the seasonal swing, automatically flattened as the capacity factor nears 100%). The defaults (25%, ±45%, 1.3) come from a synthetic tracker profile for southern Spain. Pick a site to replace them: the page fetches one year of hourly irradiance and temperature for that point, turns it into DC output per kWp for the chosen mounting (single-axis tracker limited to ±60°, fixed tilt facing the equator, or east-west at 10°; isotropic sky, 0.2 albedo, 10% DC losses, −0.35%/°C), with the electrolyzer following the array one to one. The capacity factor is the yearly mean; the seasonal swing is the sine amplitude that best reproduces venting on the real daily totals; the buffer factor is the smallest buffer that still delivers the full output in an hourly simulation, averaged over uptimes of 50–80%. It is a rough fit on one weather year, not a bankable yield study. Solar data via Open-Meteo, CC BY 4.0: irradiance from the EUMETSAT CM SAF SARAH-3 satellite record, the dataset PVGIS uses, wherever it covers the point (Europe, Africa, the Middle East, eastern South America); elsewhere, and for air temperature, from ERA5 reanalysis (Copernicus/ECMWF), which can read 5–10% off. The status line says which was used. Place search: Open-Meteo geocoding (GeoNames) and OpenStreetMap Nominatim (© OpenStreetMap contributors). Picking a place first shows the fitted results of the nearest of about 330 stored points worldwide (2025 data, marked ~), then fetches the exact data for the point in the background and swaps it in. Fetched sites are saved in this browser. On summer days when the electrolyzer makes more H₂ than the methanation unit can take, the surplus is vented and the electrolyzer is enlarged to make up for it, so pushing uptime too high costs more H₂ plant. With Auto ticked, the methanation uptime is reset to the value with the lowest production cost every time an input changes; moving the uptime slider switches Auto off. Hydrogen cost is per kg delivered to methanation, after venting. All power is bought at the solar price, including methanation power outside solar hours and DAC power when the CO₂ source is DAC. With DAC as the CO₂ source, CO₂ comes off the electrolyzer in step with the H₂, so a CO₂ buffer of 5.46 kg per kg of H₂ buffered is added, and DAC power and CO₂ cost also cover the CO₂ vented with the H₂ in summer. Biogenic CO₂ is assumed delivered as needed, with no buffer. The H₂ plant is costed in USD and converted at the exchange rate. Stacks are replaced when cumulative run hours pass the replacement interval, at the replacement cost as a share of the stack capex. Scenario links made before the stack and systems split carried one total H₂ plant capex; they open with the stack set to that total minus the current systems cost.</p>
+          <p class="foot">Opening the page always starts from the defaults. Changes are not saved in the address bar; use Copy scenario link to keep or share a set of inputs. Real terms, pre-tax, unlevered: the IRR assumes no debt, so it is the project return before leverage. Rating bands for the unlevered IRR: under 10% weak, 10–15% OK, 15–20% good, 20–25% very good, 25% and up great. All capex in year 0, operation in years 1 to lifetime. Methane in MWh (LHV, 13.89 MWh/t). CO₂ and H₂ use are stoichiometric (CO₂ + 4 H₂ → CH₄ + 2 H₂O). Equipment costs are entered for a unit running 24/7 and each unit is then sized by its own uptime: the electrolyzer by the capacity factor, the methanation unit by the methanation uptime (never below the capacity factor). When methanation runs more hours than the electrolyzer, an H₂ buffer covers the gap; it is sized at the buffer size factor × an average day of H₂ × (1 − capacity factor / methanation uptime). H₂ plant capex is the stack plus the H₂ systems (power supply, gas separation and purification, compressor, water treatment and cooling, installation), each in $/kW of electrolyzer. H₂ leaves the stacks at atmospheric pressure and one compressor lifts it to the buffer pressure, or straight to the methanation pressure when there is no buffer. Compressor cost and compression energy are entered for 30 bar and scale with the delivery pressure (energy with ln of the pressure, cost with that to the power 0.7). The buffer can only be drawn down to the methanation pressure plus 2 bar, so the tank is sized, and paid for, at usable H₂ ÷ (1 − (methanation pressure + 2) ÷ buffer pressure). Methanation capex is entered for a 10 bar unit: 45% of it (reactor, heat exchangers, piping) scales with (10 ÷ pressure)^0.3 and a pressure-rating factor of 1.2% per bar above 5 bar, a rough rule, not a quote. CO₂ compression is not costed separately, and compressing the methane for delivery sits in Logistics. Solar output is modelled as a sine wave over the year (the seasonal swing, automatically flattened as the capacity factor nears 100%). The defaults (25%, ±45%, 1.3) come from a synthetic tracker profile for southern Spain. Pick a site to replace them: the page fetches one year of hourly irradiance and temperature for that point, turns it into DC output per kWp for the chosen mounting (single-axis tracker limited to ±60°, fixed tilt facing the equator, or east-west at 10°; isotropic sky, 0.2 albedo, 10% DC losses, −0.35%/°C), with the electrolyzer following the array one to one. The capacity factor is the yearly mean; the seasonal swing is the sine amplitude that best reproduces venting on the real daily totals; the buffer factor is the smallest buffer that still delivers the full output in an hourly simulation, averaged over uptimes of 50–80%. It is a rough fit on one weather year, not a bankable yield study. Solar data via Open-Meteo, CC BY 4.0: irradiance from the EUMETSAT CM SAF SARAH-3 satellite record, the dataset PVGIS uses, wherever it covers the point (Europe, Africa, the Middle East, eastern South America); elsewhere, and for air temperature, from ERA5 reanalysis (Copernicus/ECMWF), which can read 5–10% off. The status line says which was used. Place search: Open-Meteo geocoding (GeoNames) and OpenStreetMap Nominatim (© OpenStreetMap contributors). Picking a place first shows the fitted results of the nearest of about 330 stored points worldwide (2025 data, marked ~), then fetches the exact data for the point in the background and swaps it in. Fetched sites are saved in this browser. On summer days when the electrolyzer makes more H₂ than the methanation unit can take, the surplus is vented and the electrolyzer is enlarged to make up for it, so pushing uptime too high costs more H₂ plant. With Auto ticked, the methanation uptime is reset to the value with the lowest production cost every time an input changes; moving the uptime slider switches Auto off. Hydrogen cost is per kg delivered to methanation, after venting. All power is bought at the solar price, including methanation power outside solar hours and DAC power when the CO₂ source is DAC. With DAC as the CO₂ source, CO₂ comes off the electrolyzer in step with the H₂, so a CO₂ buffer of 5.46 kg per kg of H₂ buffered is added, and DAC power and CO₂ cost also cover the CO₂ vented with the H₂ in summer. Biogenic CO₂ is assumed delivered as needed, with no buffer. The H₂ plant is costed in USD and converted at the exchange rate. Stacks are replaced when cumulative run hours pass the replacement interval, at the replacement cost as a share of the stack capex. Solar oversizing puts more kWp of array behind each kW of electrolyzer: the electrolyzer clips the midday peaks, runs more hours and is smaller for the same output. The power price is per MWh the array makes, so clipped MWh are paid for and wasted (a pay-as-produced PPA); methanation and DAC power are not taken from the clipped share. For a site with exact hourly data the capacity factor, swing, buffer factor and clipped share are fitted for every oversizing from 1 to 3 in 0.05 steps; the built-in profile and the stored-point estimates have no hourly data, so they stay at 1. Find lowest cost searches mounting, oversizing and methanation uptime with every price, capex, pressure and finance input held fixed. Plant size is not searched: every cost scales linearly with it, so it does not change the production cost. Scenario links made before the stack and systems split carried one total H₂ plant capex; they open with the stack set to that total minus the current systems cost.</p>
         </details>
       </section>
     </div>
@@ -354,6 +359,7 @@ details.assume[open] summary::after { content: "Hide"; }
     { k: 'pw', g: 'h2', label: 'Power price', unit: '$/MWh', min: 0, max: 100, step: 1, def: 20, dp: 1 },
     { k: 'cf', g: 'h2', label: 'Capacity factor', note: 'sets run hours and plant size', unit: '%', min: 5, max: 100, step: 1, def: 25, dp: 0 },
     { k: 'stk', g: 'h2', label: 'H₂ stack capex', note: 'stack only; systems are set in Assumptions', unit: '$/kW', min: 20, max: 1500, step: 10, def: 160, dp: 0 },
+    { k: 'ov', g: 'h2', label: 'Solar oversizing', note: 'kWp of array per kW of electrolyzer', unit: '×', min: 1, max: 3, step: 0.05, def: 1, dp: 2 },
     { k: 'mu', g: 'meth', label: 'Methanation uptime', unit: '%', min: 5, max: 100, step: 1, def: 65, dp: 0 },
     { k: 'wacc', g: 'fin', label: 'Cost of capital (WACC)', unit: '%', min: 2, max: 20, step: 0.5, def: 7, dp: 1 },
     { k: 'price', g: 'off', label: 'Off-take price', note: 'per MWh of e-methane', unit: '€/MWh', min: 40, max: 400, step: 5, def: 180, dp: 0 },
@@ -385,6 +391,7 @@ details.assume[open] summary::after { content: "Hide"; }
     { k: 'cbc', label: 'CO₂ buffer storage', unit: '€ per kg CO₂ stored, installed; used when source is DAC', def: 30, min: 0, max: 500, step: 1 },
     { k: 'sw', label: 'Seasonal swing in solar output', unit: '± % around the yearly average; set by the site', def: 45, min: 0, max: 90, step: 1 },
     { k: 'bk', label: 'H₂ buffer size factor', unit: '× an average day of H₂ × (1 − capacity factor / uptime); set by the site', def: 1.3, min: 0, max: 50, step: 0.05 },
+    { k: 'clip', label: 'Clipped solar', unit: '% of array output, paid for but not used; set by the site and the oversizing', def: 0, min: 0, max: 90, step: 0.1 },
     { k: 'vrc', label: 'Variable reaction cost', unit: '€/MWh CH₄ (catalyst, utilities)', def: 5, min: 0, max: 50, step: 0.5 },
     { k: 'mp', label: 'Methanation power', unit: 'MWh per MWh CH₄', def: 0.02, min: 0, max: 0.5, step: 0.005 },
     { k: 'log', label: 'Logistics', unit: '€/MWh CH₄ (compression, injection, transport)', def: 8, min: 0, max: 60, step: 0.5 },
@@ -421,6 +428,7 @@ details.assume[open] summary::after { content: "Hide"; }
 
   function model(s) {
     const r = s.wacc / 100, n = Math.max(1, Math.round(s.life)), cf = Math.min(1, s.cf / 100), fx = s.fx;
+    const clipF = 1 / (1 - Math.min(0.9, Math.max(0, s.clip / 100))); // MWh the array makes (and we pay for) per MWh the electrolyzer uses
     const out = s.co2 / CO2_PER;                 // MWh CH4 per year
     const hours = 8760 * cf;                     // electrolyzer full-load hours
     const u = Math.min(1, Math.max(cf, s.mu / 100)); // methanation uptime, never below the electrolyzer's
@@ -465,17 +473,20 @@ details.assume[open] summary::after { content: "Hide"; }
     let pvRepl = 0; for (let t = 1; t <= n; t++) pvRepl += repl[t] / Math.pow(1 + r, t);
     const lc = {
       elec: (s.sec + ceE) * g * s.pw / 1000,
+      clip: (s.sec + ceE) * g * s.pw * (clipF - 1) / 1000,
       capex: h2kW / ann / kgPerKW, capStack: s.stk / ann / kgPerKW, capBop: bopKW / ann / kgPerKW,
       om: s.om / 100 * h2kW / kgPerKW,
       water: s.wl * g * s.wp / 1000,
       repl: h2t > 0 ? pvRepl * fx / (h2t * 1000 * ann) : 0,
     };
-    const lcoh = lc.elec + lc.capex + lc.om + lc.water + lc.repl;
+    const lcoh = lc.elec + lc.clip + lc.capex + lc.om + lc.water + lc.repl;
     const elecG = h2made * (s.sec + ceE) / 1000, methG = out / 1000 * s.mp, dacG = isDac ? co2made * s.dac / 1000 : 0;
     const powG = elecG + methG + dacG;
     const instMW = powG * 1000 / hours;
+    const arrayMW = elecG * 1000 / hours * Math.max(1, s.ov);   // solar array, MWp DC, behind electrolysis and compression
+    const clipG = elecG * (clipF - 1);           // GWh/yr of solar paid for and clipped
     const per = {
-      power: powG * 1000 / out * s.pw / fx,
+      power: (powG + clipG) * 1000 / out * s.pw / fx,
       co2: co2made / out * s.cc,
       h2om: (s.om / 100 * h2CapEUR + h2made * s.wl * s.wp / fx) / out,
       react: s.mom / 100 * methCapEUR / out + s.vrc,
@@ -489,7 +500,7 @@ details.assume[open] summary::after { content: "Hide"; }
     per.capex = lcom - opex;
     per.capH2 = (h2CapEUR + pvRepl) / (out * ann); per.capMeth = methCapEUR / (out * ann); per.capBuf = (bufCapEUR + co2BufCapEUR) / (out * ann);
     const yr1 = out * (s.price - opex);
-    return { out, hours, u, vent, g, methCap, methMW, methHours: 8760 * u, h2t, h2made, elecMW, h2CapEUR, stackCapEUR, bopCapEUR, bopKW, cmpKW, h2kW, ceE, pr, pd, hasBuf, bufUse, bufStore, methF, methCapEUR, bufKg, bufCapEUR, co2BufKg, co2BufCapEUR, co2made, isDac, ann, pvRepl, capex, lc, lcoh, powG, elecG, methG, dacG, instMW, per, opex, cfs, irr: irrV, npv, lcom, payback: yr1 > 0 ? capex / yr1 : Infinity, r, n, repl };
+    return { out, hours, u, vent, g, methCap, methMW, methHours: 8760 * u, h2t, h2made, elecMW, arrayMW, clipG, clipF, h2CapEUR, stackCapEUR, bopCapEUR, bopKW, cmpKW, h2kW, ceE, pr, pd, hasBuf, bufUse, bufStore, methF, methCapEUR, bufKg, bufCapEUR, co2BufKg, co2BufCapEUR, co2made, isDac, ann, pvRepl, capex, lc, lcoh, powG, elecG, methG, dacG, instMW, per, opex, cfs, irr: irrV, npv, lcom, payback: yr1 > 0 ? capex / yr1 : Infinity, r, n, repl };
   }
   window.__model = model;
   // Lowest-cost methanation uptime, to the nearest 1%. Coarse scan, then a fine scan around the best point: about 30 model runs.
@@ -533,10 +544,11 @@ details.assume[open] summary::after { content: "Hide"; }
         row.querySelectorAll('button').forEach(b => b.addEventListener('click', () => { S[a.k] = b.dataset.v; update(); }));
       } else {
         const sMin = a.log ? 0 : a.min, sMax = a.log ? 1000 : a.max, sStep = a.log ? 1 : a.step;
-        row.innerHTML = `<label for="n-${a.k}">${esc(a.label)}${note}</label><input type="range" id="r-${a.k}" min="${sMin}" max="${sMax}" step="${sStep}" aria-label="${esc(a.label)} slider"><input type="text" id="n-${a.k}" inputmode="decimal" autocomplete="off"><span class="unit">${esc(a.unit)}</span>`;
+        const note2 = a.k === 'ov' ? `<span class="note" id="ovNote">${esc(a.note)}</span>` : note;
+        row.innerHTML = `<label for="n-${a.k}">${esc(a.label)}${note2}</label><input type="range" id="r-${a.k}" min="${sMin}" max="${sMax}" step="${sStep}" aria-label="${esc(a.label)} slider"><input type="text" id="n-${a.k}" inputmode="decimal" autocomplete="off"><span class="unit">${esc(a.unit)}</span>`;
         const rng = row.querySelector('input[type=range]'), num = row.querySelector('input[inputmode=decimal]');
-        rng.addEventListener('input', () => { S[a.k] = fromSlider(a, rng.value); if (a.k === 'mu') S.auto = 0; update(rng); });
-        num.addEventListener('input', () => { const v = parseNum(num.value); if (isFinite(v) && v >= 0) { S[a.k] = v; if (a.k === 'mu') S.auto = 0; update(num); } });
+        rng.addEventListener('input', () => { S[a.k] = fromSlider(a, rng.value); if (a.k === 'mu') S.auto = 0; if (a.k === 'ov') applyOv(); update(rng); });
+        num.addEventListener('input', () => { const v = parseNum(num.value); if (isFinite(v) && v >= 0 && !(a.k === 'ov' && (v < 1 || v > 3))) { S[a.k] = v; if (a.k === 'mu') S.auto = 0; if (a.k === 'ov') applyOv(); update(num); } });
         num.addEventListener('blur', () => syncControls());
         if (a.k === 'stk') {
           const cell = document.createElement('div'); cell.className = 'capcell';
@@ -578,6 +590,9 @@ details.assume[open] summary::after { content: "Hide"; }
     });
     ASSUME.forEach(a => { if (!a.k) return; const i = document.getElementById('a-' + a.k); if (i !== skip) i.value = fmtIn(S[a.k]); });
     document.getElementById('autoMu').checked = !!S.auto;
+    const og = !!SITE.grid;
+    ['r-ov', 'n-ov'].forEach(id => { document.getElementById(id).disabled = !og; });
+    document.getElementById('ovNote').textContent = og ? 'kWp of array per kW of electrolyzer' : SITE.est && fetching ? 'available once the exact site data is in' : 'pick a site to use';
     const ch = ALL.filter(a => a.k !== 'mu' && S[a.k] !== a.def).map(a => `${a.label}: ${S[a.k]} (default ${a.def})`);
     if (!S.auto) ch.push(`Methanation uptime: ${S.mu}% set by hand (default: auto)`);
     const rb = document.getElementById('resetTop'); rb.classList.toggle('on', ch.length > 0);
@@ -659,7 +674,7 @@ details.assume[open] summary::after { content: "Hide"; }
       { n: 'CO₂', c: '--c-co2', parts: m.isDac
         ? [P('DAC cost, excluding power', m.per.co2), P('DAC power', m.dacG * 1000 / m.out * pw), P('CO₂ buffer', m.co2BufCapEUR / d, 1)]
         : [P('Purchased CO₂', m.per.co2)] },
-      { n: 'H₂', c: '--c-h2', parts: [P('Electricity', m.elecG * 1000 / m.out * pw), P('H₂ stack', m.stackCapEUR / d, 1), P('H₂ systems', m.bopCapEUR / d, 1), P('Stack replacement', m.pvRepl / d, 1),
+      { n: 'H₂', c: '--c-h2', parts: [P('Electricity', m.elecG * 1000 / m.out * pw), P('Clipped solar, paid but not used', m.clipG * 1000 / m.out * pw), P('H₂ stack', m.stackCapEUR / d, 1), P('H₂ systems', m.bopCapEUR / d, 1), P('Stack replacement', m.pvRepl / d, 1),
         P('H₂ buffer', m.bufCapEUR / d, 1), P('Fixed O&M', S.om / 100 * m.h2CapEUR / m.out), P('Water', m.h2made * S.wl * S.wp / S.fx / m.out)] },
       { n: 'Methanation', c: '--c-meth', parts: [P('Methanation unit', m.methCapEUR / d, 1), P('Fixed O&M', S.mom / 100 * m.methCapEUR / m.out),
         P('Catalyst and utilities', S.vrc), P('Power', m.methG * 1000 / m.out * pw)] },
@@ -742,7 +757,7 @@ details.assume[open] summary::after { content: "Hide"; }
     const lcohTxt = `$${nf(m.lcoh, 2)}`;
     document.getElementById('lcoh').innerHTML = `${lcohTxt}<small>/kg</small>`;
     const lcItems = [
-      { n: 'Electricity', v: m.lc.elec, c: '--s-power' }, { n: 'Stack capex', v: m.lc.capStack, c: '--s-capex' }, { n: 'Systems capex', v: m.lc.capBop, c: '--s-logi' },
+      { n: 'Electricity', v: m.lc.elec, c: '--s-power' }, ...(m.lc.clip > 1e-6 ? [{ n: 'Clipped solar', v: m.lc.clip, c: '--offtake-line' }] : []), { n: 'Stack capex', v: m.lc.capStack, c: '--s-capex' }, { n: 'Systems capex', v: m.lc.capBop, c: '--s-logi' },
       { n: 'Stack replacement', v: m.lc.repl, c: '--s-react' }, { n: 'Fixed O&M', v: m.lc.om, c: '--s-h2om' }, { n: 'Water', v: m.lc.water, c: '--s-co2' },
     ];
     drawStack('lcohStack', 'lcohLegend', lcItems, Math.max(m.lcoh, 1e-9), v => `$${nf(v, 2)}`, false);
@@ -769,6 +784,8 @@ details.assume[open] summary::after { content: "Hide"; }
       ['Production cost (LCOM)', `€${nf(m.lcom, 2)}/MWh`],
       ['Simple payback', isFinite(m.payback) ? `${nf(m.payback, 1)} years` : 'never'],
       ['Electrolyzer size', `${ev} ${eu}`],
+      ['Solar array', `${mw(m.arrayMW).join(' ')}p DC` + (S.ov > 1 ? `, ${nf(S.ov, 2)}× the electrolyzer` : '')],
+      ...(S.clip > 0.05 ? [['Solar clipped', `${nf(S.clip, 1)}% of array output`]] : []),
       ['H₂ stack capex', eurM(m.stackCapEUR)],
       ['H₂ systems capex', `${eurM(m.bopCapEUR)}, $${nf(m.bopKW, 0)}/kW`],
       ['  of which compressor', `$${nf(m.cmpKW, 0)}/kW to ${nf(m.pd, 0)} bar`],
@@ -858,8 +875,8 @@ details.assume[open] summary::after { content: "Hide"; }
   let SITE = { ...SITE_DEF };
   let pick = null, mount = 'tracker', year = LAST_YEAR, hits = [], hitIdx = -1, lastQ = '';
   const MOUNTS = { tracker: 'single-axis tracker', fixed: 'fixed tilt', ew: 'east-west' };
-  const store = { get() { try { return JSON.parse(localStorage.getItem('emSites2') || '{}'); } catch (e) { return {}; } },
-    put(k, v) { try { const all = this.get(); all[k] = v; localStorage.setItem('emSites2', JSON.stringify(all)); } catch (e) {} } };
+  const store = { get() { try { return JSON.parse(localStorage.getItem('emSites3') || '{}'); } catch (e) { return {}; } },
+    put(k, v) { try { const all = this.get(); all[k] = v; localStorage.setItem('emSites3', JSON.stringify(all)); } catch (e) {} } };
   const siteKey = (lat, lon, m, y) => `${(+lat).toFixed(2)},${(+lon).toFixed(2)},${m},${y}`;
   const weather = new Map();                    // raw hourly data already fetched in this visit
 
@@ -956,32 +973,60 @@ details.assume[open] summary::after { content: "Hide"; }
     const cf = sum / n, x = Float64Array.from(p, v => v / cf);
     const dd = []; for (let k = 0; k + 24 <= n; k += 24) { let t = 0; for (let i = k; i < k + 24; i++) t += x[i]; dd.push(t / 24); }
     const us = []; for (let u = Math.max(cf + 0.08, 0.35); u <= 0.9001; u += 0.05) us.push(u);
+    if (us.length < 2) us.splice(0, us.length, cf + (1 - cf) * 0.35, cf + (1 - cf) * 0.7);
     const real = us.map(u => gDaily(dd, u));
     let sw = 0, best = Infinity;
     for (let a = 0; a <= 0.95; a += 0.01) { let e = 0; us.forEach((u, i) => { const d = Math.log(oversize(u, Math.min(a, 1 / cf - 1))) - Math.log(real[i]); e += d * d; }); if (e < best) { best = e; sw = a; } }
-    const ks = [0.5, 0.6, 0.7, 0.8].filter(u => u > cf + 0.08).map(u => { const g = oversize(u, Math.min(sw, 1 / cf - 1)); return minBuffer(x, g, u) / (24 * g * (1 - cf / u)); });
+    let uk = [0.5, 0.6, 0.7, 0.8].filter(u => u > cf + 0.08); if (!uk.length) uk = [cf + (1 - cf) * 0.5];
+    const ks = uk.map(u => { const g = oversize(u, Math.min(sw, 1 / cf - 1)); return minBuffer(x, g, u) / (24 * g * (1 - cf / u)); });
     const bk = ks.length ? ks.reduce((a, b) => a + b, 0) / ks.length : 1.3;
     return { cf, sw, bk, kwh: sum, days: dd.length };
   }
-  window.__refit = refit; window.__pvSeries = pvSeries;
+  // Oversizing: the array is k kWp per kW of electrolyzer and the electrolyzer clips the peaks. One fit per step of k,
+  // stored with the site: [capacity factor, swing, buffer factor, share of array output clipped].
+  const OV_STEP = 0.05, OV_N = 41;               // 1.00 to 3.00
+  function fitGrid(p) {
+    let sum = 0; for (const v of p) sum += v;
+    const grid = [];
+    for (let i = 0; i < OV_N; i++) {
+      const k = 1 + OV_STEP * i, q = Float64Array.from(p, v => Math.min(k * v, 1)), f = refit(q);
+      grid.push([+f.cf.toFixed(5), +f.sw.toFixed(3), +f.bk.toFixed(3), +Math.max(0, 1 - f.kwh / (k * sum)).toFixed(5)]);
+    }
+    return { cf: grid[0][0], sw: grid[0][1], bk: grid[0][2], kwh: sum, grid };
+  }
+  function siteAt(grid, k) {
+    const x = Math.min(OV_N - 1, Math.max(0, (k - 1) / OV_STEP)), i = Math.min(OV_N - 2, Math.floor(x)), t = x - i;
+    const v = j => grid[i][j] * (1 - t) + grid[i + 1][j] * t;
+    return { cf: v(0), sw: v(1), bk: v(2), clip: v(3) };
+  }
+  window.__refit = refit; window.__pvSeries = pvSeries; window.__fitGrid = fitGrid;
 
   const r1 = v => Math.round(v * 10) / 10, r2 = v => Math.round(v * 100) / 100;
+  const siteVals = (fit, k) => { const v = fit.grid ? siteAt(fit.grid, k) : { ...fit, clip: 0 }; return { cf: r1(v.cf * 100), sw: Math.round(v.sw * 100), bk: r2(v.bk), clip: r1(v.clip * 100) }; };
+  // Without an oversizing grid (the built-in profile, a stored-point estimate) the array is 1:1 with the electrolyzer.
   function applySite(fit, meta) {
-    SITE = { ...meta, src: fit.src, cf: r1(fit.cf * 100), sw: Math.round(fit.sw * 100), bk: r2(fit.bk), kwh: Math.round(fit.kwh) };
-    S.cf = SITE.cf; S.sw = SITE.sw; S.bk = SITE.bk;
+    if (!fit.grid) S.ov = 1;
+    SITE = { ...meta, src: fit.src, kwh: Math.round(fit.kwh), grid: fit.grid, ...siteVals(fit, S.ov) };
+    S.cf = SITE.cf; S.sw = SITE.sw; S.bk = SITE.bk; S.clip = SITE.clip;
     update(); showSite();
+  }
+  function applyOv() {
+    if (!SITE.grid) return;
+    Object.assign(SITE, siteVals(SITE, S.ov));
+    S.cf = SITE.cf; S.sw = SITE.sw; S.bk = SITE.bk; S.clip = SITE.clip;
   }
   function showSite(msg, err) {
     const st = document.getElementById('siteStatus');
     st.classList.toggle('err', !!err);
     if (msg) { st.innerHTML = msg; return; }
     if (SITE.builtin) { st.innerHTML = `Using <b>${esc(SITE.name)}</b>: capacity factor 25%, swing ±45%, buffer factor 1.3. Pick a place to fit these to real hourly data.`; return; }
-    const edited = S.cf !== SITE.cf || S.sw !== SITE.sw || S.bk !== SITE.bk;
+    const edited = S.cf !== SITE.cf || S.sw !== SITE.sw || S.bk !== SITE.bk || (SITE.clip != null && S.clip !== SITE.clip);
     if (SITE.est) {
       st.innerHTML = `<b>${esc(SITE.name)}</b> · ${MOUNTS[SITE.mount]}: estimate from the nearest stored point, ${esc(SITE.est.name)} (${nf(SITE.est.km, 0)} km away, ${SITE.est.year} data): capacity factor ${nf(SITE.cf, 1)}%, swing ±${SITE.sw}%, buffer factor ${nf(SITE.bk, 2)}. ${fetching ? 'Fetching the exact data for this point…' : ''}`;
       return;
     }
-    st.innerHTML = `Using <b>${esc(SITE.name)}</b> · ${MOUNTS[SITE.mount]} · ${SITE.year}${SITE.src ? ` ${esc(SITE.src)}` : ' weather'} data${SITE.kwh ? ` · ${nf(SITE.kwh, 0)} kWh/kWp DC` : ''}: capacity factor ${nf(SITE.cf, 1)}%, swing ±${SITE.sw}%, buffer factor ${nf(SITE.bk, 2)}${edited ? '. <b>Some of these were changed by hand since.</b>' : '.'}`;
+    const ovTxt = S.ov > 1 && SITE.grid ? ` With the array ${nf(S.ov, 2)}× the electrolyzer, ${nf(SITE.clip, 1)}% of solar output is clipped.` : '';
+    st.innerHTML = `Using <b>${esc(SITE.name)}</b> · ${MOUNTS[SITE.mount]} · ${SITE.year}${SITE.src ? ` ${esc(SITE.src)}` : ' weather'} data${SITE.kwh ? ` · ${nf(SITE.kwh, 0)} kWh/kWp DC` : ''}: electrolyzer capacity factor ${nf(SITE.cf, 1)}%, swing ±${SITE.sw}%, buffer factor ${nf(SITE.bk, 2)}.${ovTxt}${SITE.grid ? '' : ' Fetch this site again to use solar oversizing.'}${edited ? ' <b>Some of these were changed by hand since.</b>' : ''}`;
   }
   // Each mounting button shows its yield and capacity factor once that site and year have been fitted.
   function updateMountSeg() {
@@ -1040,7 +1085,7 @@ details.assume[open] summary::after { content: "Hide"; }
       await new Promise(r => setTimeout(r, 20));
       // One download serves all three mountings, so fit and save them together; switching mounting is then instant.
       const fits = {};
-      for (const mk of Object.keys(MOUNTS)) { fits[mk] = { ...refit(pvSeries(h, p0.lat, p0.lon, mk)), src: h.src }; if (!(fits[mk].cf > 0.01)) throw new Error('almost no sun at this point'); }
+      for (const mk of Object.keys(MOUNTS)) { fits[mk] = { ...fitGrid(pvSeries(h, p0.lat, p0.lon, mk)), src: h.src }; if (!(fits[mk].cf > 0.01)) throw new Error('almost no sun at this point'); await new Promise(r => setTimeout(r, 0)); }
       for (const mk of Object.keys(MOUNTS)) store.put(siteKey(p0.lat, p0.lon, mk, y0), fits[mk]);
       if (fetching === key) fetching = '';
       if (pick === p0 && year === y0) applySite(fits[mount], { name: p0.name, lat: p0.lat, lon: p0.lon, mount, year: y0 });
@@ -1104,8 +1149,9 @@ details.assume[open] summary::after { content: "Hide"; }
     if (!q.has('site')) return;
     const lat = +q.get('slat'), lon = +q.get('slon'), m = MOUNTS[q.get('smount')] ? q.get('smount') : 'tracker', y = +q.get('syear') || LAST_YEAR;
     if (!isFinite(lat) || !isFinite(lon)) return;
-    SITE = { name: q.get('site'), lat, lon, mount: m, year: y, cf: S.cf, sw: S.sw, bk: S.bk, kwh: +q.get('skwh') || 0 };
+    SITE = { name: q.get('site'), lat, lon, mount: m, year: y, cf: S.cf, sw: S.sw, bk: S.bk, clip: S.clip, kwh: +q.get('skwh') || 0 };
     pick = { name: SITE.name, lat, lon }; mount = m; year = y;
+    const f = store.get()[siteKey(lat, lon, m, y)]; if (f && f.grid) { SITE.grid = f.grid; SITE.src = f.src; }
   }
 
   // ---------- state in the link ----------
@@ -1152,13 +1198,13 @@ details.assume[open] summary::after { content: "Hide"; }
       ['E-methane output', m.out, 'MWh/yr'], ['Methanation capacity at 24/7', m.methCap, 'MWh/yr'], ['Methanation size', m.methMW, 'MW CH4'],
       ['Methanation uptime used', m.u * 100, '%'], ['Methanation run hours', m.methHours, 'h/yr'],
       ['H2 buffer, usable', m.bufKg, 'kg'], ['H2 buffer, tank holds when full', m.bufStore, 'kg'], ['H2 delivery pressure', m.pd, 'bar'], ['H2 buffer capex', m.bufCapEUR, '€'], ['CO2 buffer (DAC only)', m.co2BufKg, 'kg'], ['CO2 buffer capex', m.co2BufCapEUR, '€'], ['CO2 captured', m.co2made, 't/yr'], ['H2 vented in summer', m.vent * 100, '% of H2 made'], ['H2 made', m.h2made, 't/yr'],
-      ['Installed power', m.instMW, 'MW'], ['Electrolyzer size', m.elecMW, 'MW'],
+      ['Installed power', m.instMW, 'MW'], ['Electrolyzer size', m.elecMW, 'MW'], ['Solar array', m.arrayMW, 'MWp DC'], ['Solar clipped (paid, not used)', m.clipG, 'GWh/yr'],
       ['Total capex', m.capex, '€'], ['H2 plant capex', m.h2CapEUR, '€'], ['  of which stack', m.stackCapEUR, '€'], ['  of which systems', m.bopCapEUR, '€'], ['H2 plant capex per kW', m.h2kW, '$/kW'], ['  of which systems', m.bopKW, '$/kW'], ['  of which compressor at delivery pressure', m.cmpKW, '$/kW'], ['Compression energy at delivery pressure', m.ceE, 'kWh/kg H2'], ['Methanation capex', m.methCapEUR, '€'], ['Methanation capex factor for pressure', m.methF, '× the 10 bar cost'],
       ['H2 demand (used)', m.h2t, 't/yr'], ['Power use', m.powG, 'GWh/yr'], ['  of which electrolysis + compression', m.elecG, 'GWh/yr'],
       ['  of which methanation', m.methG, 'GWh/yr'], ['  of which DAC', m.dacG, 'GWh/yr'], ['Electrolyzer run hours', m.hours, 'h/yr'],
     ].forEach(r => rows.push([r[0], num(r[1]), r[2]]));
     rows.push([], ['LCOH BREAKDOWN', '', '$/kg H2']);
-    [['Electricity', m.lc.elec], ['Stack capex', m.lc.capStack], ['Systems capex', m.lc.capBop], ['Stack replacement', m.lc.repl], ['Fixed O&M', m.lc.om], ['Water', m.lc.water]].forEach(r => rows.push([r[0], num(r[1])]));
+    [['Electricity', m.lc.elec], ['Clipped solar', m.lc.clip], ['Stack capex', m.lc.capStack], ['Systems capex', m.lc.capBop], ['Stack replacement', m.lc.repl], ['Fixed O&M', m.lc.om], ['Water', m.lc.water]].forEach(r => rows.push([r[0], num(r[1])]));
     rows.push([], ['PRODUCTION COST BREAKDOWN', '', '€/MWh CH4']);
     costCats(m).forEach(c => { rows.push([c.n, num(c.v), `${Math.round(100 * c.v / m.lcom)}% of cost`, c.cap > 0 ? `${Math.round(100 * c.cap / c.v)}% capital` : '']); c.parts.forEach(p => rows.push(['  ' + p.n + (p.cap ? ' (capital)' : ''), num(p.v)])); });
     rows.push([], ['CASH FLOW', '', '€'], ['Year', 'Net cash flow', 'Stack replacement', 'Cumulative']);
@@ -1172,7 +1218,54 @@ details.assume[open] summary::after { content: "Hide"; }
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
   document.getElementById('csvBtn').addEventListener('click', exportCsv);
-  ['resetBtn', 'resetTop'].forEach(id => document.getElementById(id).addEventListener('click', () => { ALL.forEach(a => { S[a.k] = a.def; }); S.auto = 1; resetSite(); update(); }));
+
+  // ---------- optimizer: the design choices the model leaves free, with every price, capex, pressure and finance input held fixed ----------
+  // Free: mounting and solar oversizing (1 to 3 kWp per kW, 0.05 steps) for a fetched site, and methanation uptime.
+  // Plant size is left alone: every cost scales linearly with it, so it does not move the production cost.
+  let undoState = null;
+  function findBest() {
+    const res = document.getElementById('optRes'), before = { S: { ...S }, SITE: { ...SITE }, mount, lcom: model(S).lcom };
+    const saved = SITE.builtin ? {} : store.get(), per = [];
+    let best = null;
+    for (const mk of Object.keys(MOUNTS)) {
+      const f = SITE.builtin ? null : saved[siteKey(SITE.lat, SITE.lon, mk, SITE.year)];
+      if (!f || !f.grid) continue;
+      let bm = null;
+      for (let i = 0; i < OV_N; i++) {
+        const k = +(1 + OV_STEP * i).toFixed(2), s = { ...S, ov: k, ...siteVals(f, k) };
+        s.mu = bestUptime(s); const l = model(s).lcom;
+        if (!bm || l < bm.l - 1e-9) bm = { l, k, mk, f };
+      }
+      per.push(bm); if (!best || bm.l < best.l) best = bm;
+    }
+    res.classList.toggle('warn', !best); res.hidden = false;
+    if (!best) {
+      S.auto = 1; update();
+      const why = SITE.builtin ? 'Pick a site above first: sizing the solar array against the electrolyzer needs its hourly solar data.'
+        : fetching ? 'The exact hourly data for this site is still coming in; try again in a few seconds.' : 'The exact hourly data for this site is missing; fetch it above first.';
+      res.innerHTML = `${why} For now only the methanation uptime was set to its lowest-cost value, <b>${nf(S.mu, 0)}%</b> (<b>€${nf(model(S).lcom, 2)}/MWh</b>).`;
+      return;
+    }
+    undoState = before;
+    mount = best.mk; S.ov = best.k; S.auto = 1;
+    applySite(best.f, { name: SITE.name, lat: SITE.lat, lon: SITE.lon, mount: best.mk, year: SITE.year });
+    updateMountSeg();
+    const after = model(S).lcom, d = before.lcom - after, cap = t => t[0].toUpperCase() + t.slice(1);
+    const others = per.filter(p => p !== best).map(p => `${MOUNTS[p.mk]} €${nf(p.l, 2)} at ${nf(p.k, 2)}×`).join(', ');
+    res.innerHTML = (d > 0.005 ? `Lowest production cost <b>€${nf(after, 2)}/MWh</b>, down €${nf(d, 2)} from €${nf(before.lcom, 2)}. ` : `Already at the lowest cost, <b>€${nf(after, 2)}/MWh</b>. `)
+      + `${cap(MOUNTS[best.mk])}, array <b>${nf(best.k, 2)}×</b> the electrolyzer (${nf(S.clip, 1)}% of solar clipped, electrolyzer capacity factor ${nf(S.cf, 1)}%), methanation uptime <b>${nf(S.mu, 0)}%</b>.`
+      + (others ? ` Best for ${others}.` : '') + ' Prices, capex and finance unchanged.'
+      + (d > 0.005 ? '<button class="btn" type="button" id="optUndo">Undo</button>' : '');
+    const u = document.getElementById('optUndo');
+    if (u) u.addEventListener('click', () => {
+      if (!undoState) return;
+      Object.assign(S, undoState.S); SITE = undoState.SITE; mount = undoState.mount; undoState = null;
+      updateMountSeg(); update(); res.hidden = true;
+    });
+  }
+  document.getElementById('optBtn').addEventListener('click', findBest);
+  window.__findBest = findBest;
+  ['resetBtn', 'resetTop'].forEach(id => document.getElementById(id).addEventListener('click', () => { ALL.forEach(a => { S[a.k] = a.def; }); S.auto = 1; resetSite(); document.getElementById('optRes').hidden = true; update(); }));
 
   buildMain(); buildAssume(); buildSite(); readHash(); if (readSiteHashLater) readSiteHash(readSiteHashLater);
   if (!SITE.builtin) { document.getElementById('siteQ').value = SITE.name; document.getElementById('siteYear').value = String(year); updateMountSeg(); }

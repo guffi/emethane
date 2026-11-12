@@ -316,7 +316,7 @@ details.assume[open] summary::after { content: "Hide"; }
           <summary>Assumptions</summary>
           <div class="agrid" id="agrid"></div>
           <div style="margin-top:14px"><button class="btn" id="resetBtn" type="button">Reset all inputs</button></div>
-          <p class="foot">Opening the page always starts from the defaults. Changes are not saved in the address bar; use Copy scenario link to keep or share a set of inputs. Real terms, pre-tax, unlevered: the IRR assumes no debt, so it is the project return before leverage. Rating bands for the unlevered IRR: under 10% weak, 10–15% OK, 15–20% good, 20–25% very good, 25% and up great. All capex in year 0, operation in years 1 to lifetime. Methane in MWh (LHV, 13.89 MWh/t). CO₂ and H₂ use are stoichiometric (CO₂ + 4 H₂ → CH₄ + 2 H₂O). Equipment costs are entered for a unit running 24/7 and each unit is then sized by its own uptime: the electrolyzer by the capacity factor, the methanation unit by the methanation uptime (never below the capacity factor). When methanation runs more hours than the electrolyzer, an H₂ buffer covers the gap; it is sized at the buffer size factor × an average day of H₂ × (1 − capacity factor / methanation uptime). Solar output is modelled as a sine wave over the year (the seasonal swing, automatically flattened as the capacity factor nears 100%). The defaults (25%, ±45%, 1.3) come from a synthetic tracker profile for southern Spain. Pick a site to replace them: the page fetches one year of hourly irradiance and temperature for that point, turns it into DC output per kWp for the chosen mounting (single-axis tracker limited to ±60°, fixed tilt facing the equator, or east-west at 10°; isotropic sky, 0.2 albedo, 10% DC losses, −0.35%/°C), with the electrolyzer following the array one to one. The capacity factor is the yearly mean; the seasonal swing is the sine amplitude that best reproduces venting on the real daily totals; the buffer factor is the smallest buffer that still delivers the full output in an hourly simulation, averaged over uptimes of 50–80%. It is a rough fit on one weather year, not a bankable yield study. Solar data via Open-Meteo, CC BY 4.0: irradiance from the EUMETSAT CM SAF SARAH-3 satellite record, the dataset PVGIS uses, wherever it covers the point (Europe, Africa, the Middle East, eastern South America); elsewhere, and for air temperature, from ERA5 reanalysis (Copernicus/ECMWF), which can read 5–10% off. The status line says which was used. Place search: Open-Meteo geocoding (GeoNames) and OpenStreetMap Nominatim (© OpenStreetMap contributors). Fetched sites are saved in this browser. On summer days when the electrolyzer makes more H₂ than the methanation unit can take, the surplus is vented and the electrolyzer is enlarged to make up for it, so pushing uptime too high costs more H₂ plant. With Auto ticked, the methanation uptime is reset to the value with the lowest production cost every time an input changes; moving the uptime slider switches Auto off. Hydrogen cost is per kg delivered to methanation, after venting. All power is bought at the solar price, including methanation power outside solar hours and DAC power when the CO₂ source is DAC. With DAC as the CO₂ source, CO₂ comes off the electrolyzer in step with the H₂, so a CO₂ buffer of 5.46 kg per kg of H₂ buffered is added, and DAC power and CO₂ cost also cover the CO₂ vented with the H₂ in summer. Biogenic CO₂ is assumed delivered as needed, with no buffer. The H₂ plant is costed in USD and converted at the exchange rate. Stacks are replaced when cumulative run hours pass the replacement interval.</p>
+          <p class="foot">Opening the page always starts from the defaults. Changes are not saved in the address bar; use Copy scenario link to keep or share a set of inputs. Real terms, pre-tax, unlevered: the IRR assumes no debt, so it is the project return before leverage. Rating bands for the unlevered IRR: under 10% weak, 10–15% OK, 15–20% good, 20–25% very good, 25% and up great. All capex in year 0, operation in years 1 to lifetime. Methane in MWh (LHV, 13.89 MWh/t). CO₂ and H₂ use are stoichiometric (CO₂ + 4 H₂ → CH₄ + 2 H₂O). Equipment costs are entered for a unit running 24/7 and each unit is then sized by its own uptime: the electrolyzer by the capacity factor, the methanation unit by the methanation uptime (never below the capacity factor). When methanation runs more hours than the electrolyzer, an H₂ buffer covers the gap; it is sized at the buffer size factor × an average day of H₂ × (1 − capacity factor / methanation uptime). Solar output is modelled as a sine wave over the year (the seasonal swing, automatically flattened as the capacity factor nears 100%). The defaults (25%, ±45%, 1.3) come from a synthetic tracker profile for southern Spain. Pick a site to replace them: the page fetches one year of hourly irradiance and temperature for that point, turns it into DC output per kWp for the chosen mounting (single-axis tracker limited to ±60°, fixed tilt facing the equator, or east-west at 10°; isotropic sky, 0.2 albedo, 10% DC losses, −0.35%/°C), with the electrolyzer following the array one to one. The capacity factor is the yearly mean; the seasonal swing is the sine amplitude that best reproduces venting on the real daily totals; the buffer factor is the smallest buffer that still delivers the full output in an hourly simulation, averaged over uptimes of 50–80%. It is a rough fit on one weather year, not a bankable yield study. Solar data via Open-Meteo, CC BY 4.0: irradiance from the EUMETSAT CM SAF SARAH-3 satellite record, the dataset PVGIS uses, wherever it covers the point (Europe, Africa, the Middle East, eastern South America); elsewhere, and for air temperature, from ERA5 reanalysis (Copernicus/ECMWF), which can read 5–10% off. The status line says which was used. Place search: Open-Meteo geocoding (GeoNames) and OpenStreetMap Nominatim (© OpenStreetMap contributors). Picking a place first shows the fitted results of the nearest of about 330 stored points worldwide (2025 data, marked ~), then fetches the exact data for the point in the background and swaps it in. Fetched sites are saved in this browser. On summer days when the electrolyzer makes more H₂ than the methanation unit can take, the surplus is vented and the electrolyzer is enlarged to make up for it, so pushing uptime too high costs more H₂ plant. With Auto ticked, the methanation uptime is reset to the value with the lowest production cost every time an input changes; moving the uptime slider switches Auto off. Hydrogen cost is per kg delivered to methanation, after venting. All power is bought at the solar price, including methanation power outside solar hours and DAC power when the CO₂ source is DAC. With DAC as the CO₂ source, CO₂ comes off the electrolyzer in step with the H₂, so a CO₂ buffer of 5.46 kg per kg of H₂ buffered is added, and DAC power and CO₂ cost also cover the CO₂ vented with the H₂ in summer. Biogenic CO₂ is assumed delivered as needed, with no buffer. The H₂ plant is costed in USD and converted at the exchange rate. Stacks are replaced when cumulative run hours pass the replacement interval.</p>
         </details>
       </section>
     </div>
@@ -933,6 +933,10 @@ details.assume[open] summary::after { content: "Hide"; }
     if (msg) { st.innerHTML = msg; return; }
     if (SITE.builtin) { st.innerHTML = `Using <b>${esc(SITE.name)}</b>: capacity factor 25%, swing ±45%, buffer factor 1.3. Pick a place to fit these to real hourly data.`; return; }
     const edited = S.cf !== SITE.cf || S.sw !== SITE.sw || S.bk !== SITE.bk;
+    if (SITE.est) {
+      st.innerHTML = `<b>${esc(SITE.name)}</b> · ${MOUNTS[SITE.mount]}: estimate from the nearest stored point, ${esc(SITE.est.name)} (${nf(SITE.est.km, 0)} km away, ${SITE.est.year} data): capacity factor ${nf(SITE.cf, 1)}%, swing ±${SITE.sw}%, buffer factor ${nf(SITE.bk, 2)}. ${fetching ? 'Fetching the exact data for this point…' : ''}`;
+      return;
+    }
     st.innerHTML = `Using <b>${esc(SITE.name)}</b> · ${MOUNTS[SITE.mount]} · ${SITE.year}${SITE.src ? ` ${esc(SITE.src)}` : ' weather'} data${SITE.kwh ? ` · ${nf(SITE.kwh, 0)} kWh/kWp DC` : ''}: capacity factor ${nf(SITE.cf, 1)}%, swing ±${SITE.sw}%, buffer factor ${nf(SITE.bk, 2)}${edited ? '. <b>Some of these were changed by hand since.</b>' : '.'}`;
   }
   // Each mounting button shows its yield and capacity factor once that site and year have been fitted.
@@ -940,41 +944,73 @@ details.assume[open] summary::after { content: "Hide"; }
     const saved = pick ? store.get() : {};
     document.querySelectorAll('#mountSeg button').forEach(b => {
       b.setAttribute('aria-pressed', String(b.dataset.m === mount));
-      const f = pick && saved[siteKey(pick.lat, pick.lon, b.dataset.m, year)];
-      b.querySelector('small').innerHTML = f ? `${nf(f.kwh, 0)}<span class="lw"> kWh/kWp</span> · ${nf(f.cf * 100, 1)}%` : '';
-      b.title = f ? `${nf(f.kwh, 0)} kWh/kWp DC a year, capacity factor ${nf(f.cf * 100, 1)}%` : '';
+      let f = pick && saved[siteKey(pick.lat, pick.lon, b.dataset.m, year)], est = '';
+      if (!f && pick && SITE.est && SITE.est.fits) { f = SITE.est.fits[b.dataset.m]; est = '~'; }
+      b.querySelector('small').innerHTML = f ? `${est}${nf(f.kwh, 0)}<span class="lw"> kWh/kWp</span> · ${est}${nf(f.cf * 100, 1)}%` : '';
+      b.title = f ? `${est ? 'Estimate: ' : ''}${nf(f.kwh, 0)} kWh/kWp DC a year, capacity factor ${nf(f.cf * 100, 1)}%` : '';
     });
   }
 
   // The place, mounting or year changed: use a saved fit if there is one, otherwise offer to fetch.
-  function choose() {
-    const act = document.getElementById('siteAct'); updateMountSeg();
-    if (!pick) { act.hidden = true; return; }
+  // Stored points: one year of fitted results for ~330 places worldwide, so a pick shows an estimate at once.
+  let presets = null, presetsLoading = null;
+  function loadPresets() {
+    if (presets || presetsLoading) return presetsLoading || Promise.resolve(presets);
+    presetsLoading = fetch('presets.json').then(r => r.ok ? r.json() : null).then(j => { presets = j; return j; }).catch(() => null);
+    return presetsLoading;
+  }
+  function nearestPreset(lat, lon) {
+    if (!presets || !presets.pts || !presets.pts.length) return null;
+    const D = Math.PI / 180, hav = (a, b, c, d) => { const x = Math.sin((c - a) * D / 2) ** 2 + Math.cos(a * D) * Math.cos(c * D) * Math.sin((d - b) * D / 2) ** 2; return 12742 * Math.asin(Math.sqrt(x)); };
+    let best = null, bd = Infinity;
+    for (const p of presets.pts) { const d = hav(lat, lon, p[1], p[2]); if (d < bd) { bd = d; best = p; } }
+    const fit = i => ({ cf: best[i] / 100, sw: best[i + 1] / 100, bk: best[i + 2], kwh: best[i + 3] });
+    return { name: best[0], km: bd, year: presets.year, fits: { tracker: fit(4), fixed: fit(8), ew: fit(12) } };
+  }
+
+  // The place, mounting or year changed. A saved exact fit applies at once; otherwise show the nearest stored point
+  // as an estimate and fetch the exact data in the background.
+  let fetching = '';
+  async function choose() {
+    const act = document.getElementById('siteAct');
+    if (!pick) { act.hidden = true; updateMountSeg(); return; }
+    const meta = { name: pick.name, lat: pick.lat, lon: pick.lon, mount, year };
     const saved = store.get()[siteKey(pick.lat, pick.lon, mount, year)];
-    if (saved) { act.hidden = true; applySite(saved, { name: pick.name, lat: pick.lat, lon: pick.lon, mount, year }); return; }
-    act.hidden = false;
-    document.getElementById('siteFetch').disabled = false;
-    document.getElementById('siteFetch').textContent = 'Fetch hourly solar data';
-    document.getElementById('siteHint').textContent = `${pick.name} (${pick.lat.toFixed(2)}, ${pick.lon.toFixed(2)}) isn't saved yet. This pulls one year of hourly weather and fits tracker, fixed tilt and east-west in one go.`;
+    if (saved) { act.hidden = true; applySite(saved, meta); updateMountSeg(); return; }
+    act.hidden = true;
+    const p0 = pick;
+    await loadPresets();
+    if (pick !== p0) return;
+    const pr = nearestPreset(pick.lat, pick.lon);
+    fetchSite();
+    if (pr) applySite(pr.fits[mount], { ...meta, est: pr }); else showSite(`<b>${esc(pick.name)}</b>: fetching hourly solar data for this point…`);
+    updateMountSeg();
   }
   async function fetchSite() {
     if (!pick) return;
-    const btn = document.getElementById('siteFetch'), hint = document.getElementById('siteHint'), p0 = pick, y0 = year;
-    btn.disabled = true; btn.textContent = 'Fetching…'; hint.textContent = '';
+    const btn = document.getElementById('siteFetch'), hint = document.getElementById('siteHint'), p0 = pick, y0 = year, key = siteKey(p0.lat, p0.lon, 'all', y0);
+    if (fetching === key) return;
+    fetching = key; document.getElementById('siteAct').hidden = true; showSite();
     try {
       const h = await getWeather(p0.lat, p0.lon, y0);
-      btn.textContent = 'Fitting…'; await new Promise(r => setTimeout(r, 20));
+      await new Promise(r => setTimeout(r, 20));
       // One download serves all three mountings, so fit and save them together; switching mounting is then instant.
       const fits = {};
       for (const mk of Object.keys(MOUNTS)) { fits[mk] = { ...refit(pvSeries(h, p0.lat, p0.lon, mk)), src: h.src }; if (!(fits[mk].cf > 0.01)) throw new Error('almost no sun at this point'); }
       for (const mk of Object.keys(MOUNTS)) store.put(siteKey(p0.lat, p0.lon, mk, y0), fits[mk]);
+      if (fetching === key) fetching = '';
+      if (pick === p0 && year === y0) applySite(fits[mount], { name: p0.name, lat: p0.lat, lon: p0.lon, mount, year: y0 });
       updateMountSeg();
-      if (pick === p0 && year === y0) { document.getElementById('siteAct').hidden = true; applySite(fits[mount], { name: p0.name, lat: p0.lat, lon: p0.lon, mount, year: y0 }); }
     } catch (e) {
+      if (fetching === key) fetching = '';
+      if (pick !== p0 || year !== y0) return;
       btn.disabled = false; btn.textContent = 'Try again';
-      hint.textContent = `Couldn't get data: ${e.message || e}. Check the connection, try another year, or set the capacity factor by hand.`;
+      hint.textContent = `Couldn't get the exact data: ${e.message || e}.${SITE.est ? ' Still showing the estimate.' : ' Set the capacity factor by hand meanwhile.'}`;
+      document.getElementById('siteAct').hidden = false; showSite();
     }
   }
+  // For building presets.json: fit all three mountings from an hourly series already in hand.
+  window.__fitHourly = (h, lat, lon) => { const o = {}; for (const mk of Object.keys(MOUNTS)) o[mk] = refit(pvSeries(h, lat, lon, mk)); return o; };
 
   function renderList() {
     const ul = document.getElementById('siteList'), q = document.getElementById('siteQ');
@@ -1012,6 +1048,7 @@ details.assume[open] summary::after { content: "Hide"; }
     });
     ul.addEventListener('mousedown', e => { const li = e.target.closest('li'); if (!li) return; e.preventDefault(); selectHit(li.dataset.i === 'wide' ? 'wide' : +li.dataset.i); });
     q.addEventListener('blur', () => setTimeout(closeList, 150));
+    q.addEventListener('focus', loadPresets, { once: true });
     document.querySelectorAll('#mountSeg button').forEach(b => b.addEventListener('click', () => { mount = b.dataset.m; updateMountSeg(); choose(); }));
     ys.addEventListener('change', () => { year = +ys.value; choose(); });
     document.getElementById('siteFetch').addEventListener('click', fetchSite);

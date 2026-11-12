@@ -169,6 +169,7 @@ details.assume[open] summary::after { content: "Hide"; }
     <div class="top-actions">
       <span class="copied" id="copied" hidden>Link copied</span>
       <button class="btn" id="copyBtn" type="button">Copy scenario link</button>
+      <button class="btn" id="csvBtn" type="button">Export CSV</button>
     </div>
   </header>
 
@@ -588,6 +589,39 @@ details.assume[open] summary::after { content: "Hide"; }
     const done = t => { note.textContent = t; note.hidden = false; clearTimeout(note._t); note._t = setTimeout(() => { note.hidden = true; }, 2200); };
     try { navigator.clipboard.writeText(url).then(() => done('Link copied'), () => done('Copy blocked here')); } catch (e) { done('Copy blocked here'); }
   });
+  // ---------- CSV export: parameters, results, breakdowns and cash flow in one file, downloaded directly ----------
+  function exportCsv() {
+    const m = model(S), q = v => { const t = String(v ?? ''); return /[",\n]/.test(t) ? `"${t.replace(/"/g, '""')}"` : t; };
+    const num = v => (typeof v === 'number' ? (isFinite(v) ? +v.toPrecision(10) : '') : v);
+    const rows = [['E-Methane Cost export', new Date().toISOString()], ['Scenario link', location.href.split('#')[0] + scenarioHash()], []];
+    rows.push(['PARAMETERS'], ['Key', 'Parameter', 'Value', 'Unit']);
+    ALL.forEach(a => rows.push([a.k, a.label, num(S[a.k]), a.unit || '']));
+    rows.push([], ['RESULTS'], ['Metric', 'Value', 'Unit']);
+    [
+      ['LCOH', m.lcoh, '$/kg H2'], ['Production cost (LCOM)', m.lcom, '€/MWh CH4'], ['Off-take margin', S.price - m.lcom, '€/MWh CH4'],
+      ['Project IRR (unlevered)', isFinite(m.irr) ? m.irr * 100 : 'n/a', '%'], ['NPV at WACC', m.npv, '€'],
+      ['Simple payback', isFinite(m.payback) ? m.payback : 'never', 'years'],
+      ['E-methane output', m.out, 'MWh/yr'], ['Nameplate methanation capacity', m.nameplate, 'MWh/yr'],
+      ['Installed power', m.instMW, 'MW'], ['Electrolyzer size', m.elecMW, 'MW'],
+      ['Total capex', m.capex, '€'], ['H2 plant capex', m.h2CapEUR, '€'], ['Methanation capex', m.methCapEUR, '€'],
+      ['H2 demand', m.h2t, 't/yr'], ['Power use', m.powG, 'GWh/yr'], ['  of which electrolysis + compression', m.elecG, 'GWh/yr'],
+      ['  of which methanation', m.methG, 'GWh/yr'], ['  of which DAC', m.dacG, 'GWh/yr'], ['Run hours', m.hours, 'h/yr'],
+    ].forEach(r => rows.push([r[0], num(r[1]), r[2]]));
+    rows.push([], ['LCOH BREAKDOWN', '', '$/kg H2']);
+    [['Electricity', m.lc.elec], ['Capex', m.lc.capex], ['Stack replacement', m.lc.repl], ['Fixed O&M', m.lc.om], ['Water', m.lc.water]].forEach(r => rows.push([r[0], num(r[1])]));
+    rows.push([], ['PRODUCTION COST BREAKDOWN', '', '€/MWh CH4']);
+    [['Capex recovery', m.per.capex], ['Power', m.per.power], ['CO2', m.per.co2], ['Reaction opex', m.per.react], ['Logistics & other', m.per.logi], ['H2 plant O&M & water', m.per.h2om]].forEach(r => rows.push([r[0], num(r[1])]));
+    rows.push([], ['CASH FLOW', '', '€'], ['Year', 'Net cash flow', 'Stack replacement', 'Cumulative']);
+    let cum = 0; m.cfs.forEach((c, t) => { cum += c; rows.push([t, num(c), num(m.repl[t] || 0), num(cum)]); });
+    const csv = '﻿' + rows.map(r => r.map(q).join(',')).join('\r\n');
+    const d = new Date(), p = n => String(n).padStart(2, '0');
+    const name = `emethane-${d.getFullYear()}${p(d.getMonth() + 1)}${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}.csv`;
+    const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
+    const a = document.createElement('a'); a.href = url; a.download = name; a.style.display = 'none';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+  document.getElementById('csvBtn').addEventListener('click', exportCsv);
   document.getElementById('resetBtn').addEventListener('click', () => { ALL.forEach(a => { S[a.k] = a.def; }); update(); });
 
   buildMain(); buildAssume(); readHash(); syncControls(); render();

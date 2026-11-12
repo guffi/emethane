@@ -16,6 +16,7 @@
   --good: #15803d; --good-soft: #e3f4e8; --bad: #b42318; --bad-soft: #fbe9e7; --warn: #a16207; --warn-soft: #fdf4d6;
   --s-power: #147d75; --s-co2: #5b8ea6; --s-h2om: #b5892d; --s-react: #8b5fbf; --s-logi: #8a9a95; --s-capex: #2f6fab;
   --grid: #e8eeec; --axis: #b7c4c0;
+  --c-co2: #b5892d; --c-h2: #0e8479; --c-meth: #8b5fbf; --c-other: #7b8a86;
   --radius: 8px;
   --font: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
@@ -26,7 +27,7 @@
   --offtake: #f28a4c; --offtake-soft: #33221a; --offtake-line: #6b3a1f;
   --good: #4ade80; --good-soft: #15301f; --bad: #f87171; --bad-soft: #3a1b1a; --warn: #facc15; --warn-soft: #362d0e;
   --s-power: #2fb3a6; --s-co2: #79aec6; --s-h2om: #d4a64a; --s-react: #a98ad6; --s-logi: #7d8c88; --s-capex: #5b93cf;
-  --grid: #222d2a; --axis: #3d4c48; color-scheme: dark; } }
+  --grid: #222d2a; --axis: #3d4c48; --c-co2: #b5862f; --c-h2: #1f9a8e; --c-meth: #8a68c8; --c-other: #869390; color-scheme: dark; } }
 :root[data-theme="dark"] {
   --bg: #0e1413; --panel: #151d1c; --panel-soft: #18211f;
   --text: #e5eeeb; --muted: #94a39f; --border: #25312e; --border-strong: #34433f;
@@ -34,7 +35,7 @@
   --offtake: #f28a4c; --offtake-soft: #33221a; --offtake-line: #6b3a1f;
   --good: #4ade80; --good-soft: #15301f; --bad: #f87171; --bad-soft: #3a1b1a; --warn: #facc15; --warn-soft: #362d0e;
   --s-power: #2fb3a6; --s-co2: #79aec6; --s-h2om: #d4a64a; --s-react: #a98ad6; --s-logi: #7d8c88; --s-capex: #5b93cf;
-  --grid: #222d2a; --axis: #3d4c48; color-scheme: dark;
+  --grid: #222d2a; --axis: #3d4c48; --c-co2: #b5862f; --c-h2: #1f9a8e; --c-meth: #8a68c8; --c-other: #869390; color-scheme: dark;
 }
 * { box-sizing: border-box; }
 html, body { margin: 0; }
@@ -168,9 +169,33 @@ input[inputmode=decimal]:hover { border-color: var(--border-strong); }
 .chart text { font-family: var(--font); }
 
 .costbar { position: relative; margin: 26px 0 6px; }
-.costbar .stack { height: 30px; border-radius: 6px; }
-.costbar .stack span { color: #fff; font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center; overflow: hidden; white-space: nowrap; }
-.marker { position: absolute; top: -22px; bottom: -6px; width: 0; border-left: 2px solid var(--offtake); }
+.o-cost { position: relative; }
+.cstack { display: flex; height: 34px; border-radius: 6px; overflow: hidden; background: var(--grid); }
+.cseg { position: relative; flex: 0 0 auto; min-width: 0; height: 100%; padding: 0; border: 0; border-right: 2px solid var(--panel); font: inherit; color: #fff; cursor: pointer; overflow: hidden; }
+.cseg:last-child { border-right: 0; }
+.cseg .cap, .hatch { background-image: repeating-linear-gradient(45deg, rgba(255,255,255,.42) 0 2px, rgba(255,255,255,0) 2px 6px); }
+.cseg .cap { position: absolute; left: 0; top: 0; bottom: 0; background-color: rgba(0,0,0,.2); }
+.cseg .t { position: relative; display: block; font-size: 12px; font-weight: 700; white-space: nowrap; text-shadow: 0 0 3px rgba(0,0,0,.45); }
+.cseg:hover, .cseg:focus-visible, .cseg.on { filter: brightness(1.12); outline: none; }
+.cseg:focus-visible { box-shadow: inset 0 0 0 2px var(--text); }
+.clegend { display: flex; flex-wrap: wrap; gap: 6px 8px; margin-top: 10px; font-size: 12.5px; color: var(--muted); }
+.clegend button { font: inherit; color: inherit; background: none; border: 1px solid transparent; border-radius: 6px; padding: 3px 7px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+.clegend button:hover, .clegend button:focus-visible, .clegend button.on { border-color: var(--border-strong); background: var(--panel-soft); outline: none; }
+.clegend i, .pop i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; flex: none; }
+.clegend b { color: var(--text); font-variant-numeric: tabular-nums; }
+.clegend .key { display: inline-flex; align-items: center; gap: 6px; padding: 3px 7px; }
+.clegend .key i { background-color: var(--muted); }
+.pop { position: absolute; z-index: 5; width: min(330px, calc(100% - 16px)); background: var(--panel); border: 1px solid var(--border-strong); border-radius: var(--radius); box-shadow: 0 8px 24px rgba(0,0,0,.16); padding: 12px 14px; pointer-events: none; }
+.pop h3 { margin: 0 0 8px; font-size: 13px; display: flex; justify-content: space-between; gap: 10px; align-items: baseline; }
+.pop h3 span { font-weight: 400; color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; }
+.pop .body { display: flex; gap: 12px; align-items: center; }
+.pop svg { flex: none; }
+.pop ul { list-style: none; margin: 0; padding: 0; flex: 1; min-width: 0; font-size: 12px; }
+.pop li { display: grid; grid-template-columns: 10px auto 1fr; gap: 2px 7px; align-items: center; padding: 3px 0; }
+.pop li b { font-variant-numeric: tabular-nums; }
+.pop li span { color: var(--muted); grid-column: 2 / -1; line-height: 1.25; }
+.pop li em { font-style: normal; font-variant-numeric: tabular-nums; color: var(--muted); }
+.marker { pointer-events: none; position: absolute; top: -22px; bottom: -6px; width: 0; border-left: 2px solid var(--offtake); }
 .marker span { position: absolute; top: 0; left: 6px; white-space: nowrap; font-size: 12px; font-weight: 700; color: var(--offtake); }
 .marker.flip span { left: auto; right: 6px; }
 
@@ -234,7 +259,8 @@ details.assume[open] summary::after { content: "Hide"; }
       <section class="panel o-cost" aria-labelledby="h-cost">
         <div class="panel-head"><h2 id="h-cost">What each MWh of e-methane costs</h2><span class="sub" id="costTotal"></span></div>
         <div class="costbar" id="costbar"></div>
-        <div class="legend" id="costLegend"></div>
+        <div class="clegend" id="costLegend"></div>
+        <div class="pop" id="costPop" hidden></div>
       </section>
 
       <section class="panel o-cf" aria-labelledby="h-cf">
@@ -388,7 +414,7 @@ details.assume[open] summary::after { content: "Hide"; }
     per.capex = lcom - opex;
     per.capH2 = (h2CapEUR + pvRepl) / (out * ann); per.capMeth = methCapEUR / (out * ann); per.capBuf = (bufCapEUR + co2BufCapEUR) / (out * ann);
     const yr1 = out * (s.price - opex);
-    return { out, hours, u, vent, g, methCap, methMW, methHours: 8760 * u, h2t, h2made, elecMW, h2CapEUR, methCapEUR, bufKg, bufCapEUR, co2BufKg, co2BufCapEUR, co2made, isDac, capex, lc, lcoh, powG, elecG, methG, dacG, instMW, per, opex, cfs, irr: irrV, npv, lcom, payback: yr1 > 0 ? capex / yr1 : Infinity, r, n, repl };
+    return { out, hours, u, vent, g, methCap, methMW, methHours: 8760 * u, h2t, h2made, elecMW, h2CapEUR, methCapEUR, bufKg, bufCapEUR, co2BufKg, co2BufCapEUR, co2made, isDac, ann, pvRepl, capex, lc, lcoh, powG, elecG, methG, dacG, instMW, per, opex, cfs, irr: irrV, npv, lcom, payback: yr1 > 0 ? capex / yr1 : Infinity, r, n, repl };
   }
   window.__model = model;
   // Lowest-cost methanation uptime, to the nearest 1%. Coarse scan, then a fine scan around the best point: about 30 model runs.
@@ -542,6 +568,91 @@ details.assume[open] summary::after { content: "Hide"; }
     document.getElementById(legendId).innerHTML = items.map(it => `<span><i style="background:var(${it.c})"></i>${esc(it.n)} <b>${fmt(it.v)}</b></span>`).join('');
   }
 
+  // ---------- cost per MWh: four blocks, capital share hatched, parts on hover ----------
+  // Every euro of production cost lands in exactly one block. "cap" marks money that pays back equipment we buy.
+  function costCats(m) {
+    const d = m.out * m.ann, pw = S.pw / S.fx, P = (n, v, cap) => ({ n, v, cap: !!cap });
+    const cats = [
+      { n: 'CO₂', c: '--c-co2', parts: m.isDac
+        ? [P('DAC cost, excluding power', m.per.co2), P('DAC power', m.dacG * 1000 / m.out * pw), P('CO₂ buffer', m.co2BufCapEUR / d, 1)]
+        : [P('Purchased CO₂', m.per.co2)] },
+      { n: 'H₂', c: '--c-h2', parts: [P('Electricity', m.elecG * 1000 / m.out * pw), P('H₂ plant', m.h2CapEUR / d, 1), P('Stack replacement', m.pvRepl / d, 1),
+        P('H₂ buffer', m.bufCapEUR / d, 1), P('Fixed O&M', S.om / 100 * m.h2CapEUR / m.out), P('Water', m.h2made * S.wl * S.wp / S.fx / m.out)] },
+      { n: 'Methanation', c: '--c-meth', parts: [P('Methanation unit', m.methCapEUR / d, 1), P('Fixed O&M', S.mom / 100 * m.methCapEUR / m.out),
+        P('Catalyst and utilities', S.vrc), P('Power', m.methG * 1000 / m.out * pw)] },
+      { n: 'Other', c: '--c-other', parts: [P('Logistics', S.log), P('Staff, insurance, land', S.oth)] },
+    ];
+    cats.forEach(c => { c.parts = c.parts.filter(p => p.v > 1e-9); c.v = c.parts.reduce((t, p) => t + p.v, 0); c.cap = c.parts.reduce((t, p) => t + (p.cap ? p.v : 0), 0); });
+    return cats;
+  }
+  window.__costCats = () => costCats(model(S));
+  // Parts under 5% of their block are merged into one "Other" slice (a lone small part keeps its name).
+  function pieParts(c) {
+    const big = c.parts.filter(p => p.v / c.v >= 0.05).sort((a, b) => b.v - a.v), small = c.parts.filter(p => p.v / c.v < 0.05);
+    if (small.length === 1) big.push(small[0]);
+    else if (small.length > 1) big.push({ n: 'Other', sub: small.map(p => p.n).join(', '), v: small.reduce((t, p) => t + p.v, 0), cap: small.every(p => p.cap) });
+    return big;
+  }
+  let CATS = [], openCat = -1;
+  function drawCost(m) {
+    CATS = costCats(m);
+    const scale = Math.max(m.lcom, S.price) * 1.04, cb = document.getElementById('costbar'), bw = cb.clientWidth || 600;
+    cb.innerHTML = `<div class="cstack">${CATS.map((c, i) => {
+      const w = 100 * c.v / scale, sh = c.v / m.lcom, capPct = c.v > 0 ? 100 * c.cap / c.v : 0;
+      const px = bw * w / 100, pc = `${Math.round(100 * sh)}%`, full = `${c.n} ${pc}`;
+      const txt = px > full.length * 7.4 + 14 ? full : px > pc.length * 7.4 + 10 ? pc : '';
+      return `<button type="button" class="cseg" data-cat="${i}" style="flex-basis:${w}%;background-color:var(${c.c})" aria-label="${esc(c.n)}: €${nf(c.v, 2)} per MWh, ${Math.round(100 * sh)}% of production cost${c.cap > 0 ? `, of which ${Math.round(capPct)}% is capital cost` : ''}">${c.cap > 0 ? `<span class="cap" style="width:${capPct}%"></span>` : ''}<span class="t">${txt}</span></button>`;
+    }).join('')}</div>`;
+    const mx = 100 * S.price / scale;
+    cb.insertAdjacentHTML('beforeend', `<div class="marker${mx > 70 ? ' flip' : ''}" style="left:${mx}%"><span>Off-take €${nf(S.price, 0)}</span></div>`);
+    document.getElementById('costLegend').innerHTML = CATS.map((c, i) =>
+      `<button type="button" data-cat="${i}"><i style="background-color:var(${c.c})"></i>${esc(c.n)} <b>€${nf(c.v, 2)}</b>${c.cap > 0 ? `<span>${Math.round(100 * c.cap / c.v)}% capital</span>` : ''}</button>`).join('')
+      + `<span class="key"><i class="hatch"></i>hatched = capital cost of equipment</span>`;
+    document.getElementById('costTotal').textContent = `Production cost €${nf(m.lcom, 2)}/MWh at ${nf(S.wacc, 1)}% WACC. Hover or tap a block for its parts.`;
+    showPop(-1);
+  }
+  function showPop(i, anchor) {
+    const pop = document.getElementById('costPop');
+    document.querySelectorAll('.o-cost [data-cat]').forEach(e => e.classList.toggle('on', +e.dataset.cat === i));
+    openCat = i;
+    if (i < 0 || !CATS[i]) { pop.hidden = true; return; }
+    const c = CATS[i], parts = pieParts(c), total = CATS.reduce((t, x) => t + x.v, 0);
+    const tint = k => `color-mix(in oklab, var(${c.c}) ${[100, 74, 54, 38, 26, 18][Math.min(k, 5)]}%, var(--panel))`;
+    const R = 54, C = 58; let a0 = -Math.PI / 2, svg = `<svg viewBox="0 0 116 116" width="116" height="116" role="img" aria-label="${esc(c.n)} cost parts"><defs><pattern id="ph" patternUnits="userSpaceOnUse" width="6" height="6" patternTransform="rotate(45)"><rect width="2" height="6" fill="#fff" fill-opacity=".5"/></pattern></defs>`;
+    parts.forEach((p, k) => {
+      const f = p.v / c.v, a1 = a0 + f * 2 * Math.PI;
+      const shape = f > 0.9995 ? `<circle cx="${C}" cy="${C}" r="${R}"` : `<path d="M${C} ${C} L${(C + R * Math.cos(a0)).toFixed(2)} ${(C + R * Math.sin(a0)).toFixed(2)} A${R} ${R} 0 ${f > 0.5 ? 1 : 0} 1 ${(C + R * Math.cos(a1)).toFixed(2)} ${(C + R * Math.sin(a1)).toFixed(2)} Z"`;
+      svg += `${shape} fill="${tint(k)}" stroke="var(--panel)" stroke-width="2"/>` + (p.cap ? `${shape} fill="url(#ph)" stroke="none"/>` : '');
+      a0 = a1;
+    });
+    pop.innerHTML = `<h3></h3><div class="body">${svg}</svg><ul></ul></div>`;
+    const h = pop.querySelector('h3'); h.textContent = c.n + ' ';
+    const hs = document.createElement('span'); hs.textContent = `€${nf(c.v, 2)}/MWh · ${Math.round(100 * c.v / total)}% of cost`; h.appendChild(hs);
+    const ul = pop.querySelector('ul');
+    parts.forEach((p, k) => {
+      const li = document.createElement('li'), sw = document.createElement('i'), b = document.createElement('b'), em = document.createElement('em'), sp = document.createElement('span');
+      sw.style.backgroundColor = tint(k); if (p.cap) sw.className = 'hatch';
+      b.textContent = `€${nf(p.v, 2)}`; em.textContent = `${nf(100 * p.v / c.v, 0)}%`;
+      sp.textContent = p.n + (p.cap ? ' (capital)' : '') + (p.sub ? ': ' + p.sub : '');
+      li.append(sw, b, em, sp); ul.appendChild(li);
+    });
+    pop.hidden = false;
+    const host = pop.parentElement.getBoundingClientRect(), t = (anchor || document.querySelector(`.cseg[data-cat="${i}"]`)).getBoundingClientRect();
+    const left = Math.max(8, Math.min(host.width - pop.offsetWidth - 8, t.left - host.left + t.width / 2 - pop.offsetWidth / 2));
+    pop.style.left = left + 'px'; pop.style.top = (t.bottom - host.top + 8) + 'px';
+  }
+  (function wireCost() {
+    const host = document.querySelector('.o-cost'), hit = e => e.target.closest && e.target.closest('[data-cat]'); let touch = false;
+    host.addEventListener('pointerover', e => { const t = hit(e); if (t && e.pointerType !== 'touch') showPop(+t.dataset.cat, t); });
+    host.addEventListener('pointerout', e => { const t = hit(e); if (t && e.pointerType !== 'touch' && !(e.relatedTarget && t.contains(e.relatedTarget))) showPop(-1); });
+    host.addEventListener('focusin', e => { const t = hit(e); if (t && !touch) showPop(+t.dataset.cat, t); });
+    host.addEventListener('focusout', e => { if (hit(e)) showPop(-1); });
+    host.addEventListener('pointerdown', e => { touch = e.pointerType === 'touch'; }); document.addEventListener('keydown', () => { touch = false; });
+    // tap toggles on touch screens; with a mouse or keyboard the block is already open, so a click keeps it open
+    host.addEventListener('click', e => { const t = hit(e); if (t) { e.stopPropagation(); const i = +t.dataset.cat; showPop(touch && openCat === i ? -1 : i, t); } });
+    document.addEventListener('click', () => { if (openCat >= 0) showPop(-1); });
+  })();
+
   // ---------- render ----------
   function render() {
     const m = model(S);
@@ -591,18 +702,7 @@ details.assume[open] summary::after { content: "Hide"; }
     const marg = S.price - m.lcom, mEl = document.getElementById('offMargin');
     mEl.innerHTML = `${marg < 0 ? '−' : '+'}€${nf(Math.abs(marg), 2)}<span class="lw">/MWh</span>`; mEl.style.color = `var(${marg < 0 ? '--bad' : '--good'})`;
 
-    const items = [
-      { n: 'Capex recovery', v: m.per.capex, c: '--s-capex' }, { n: 'Power', v: m.per.power, c: '--s-power' },
-      { n: 'CO₂', v: m.per.co2, c: '--s-co2' }, { n: 'Methanation O&M', v: m.per.react, c: '--s-react' },
-      { n: 'Logistics & other', v: m.per.logi, c: '--s-logi' }, { n: 'H₂ plant O&M & water', v: m.per.h2om, c: '--s-h2om' },
-    ].sort((a, b) => b.v - a.v);
-    const scale = Math.max(m.lcom, S.price) * 1.04;
-    const cb = document.getElementById('costbar');
-    cb.innerHTML = `<div class="stack" id="costStack"></div>`;
-    drawStack('costStack', 'costLegend', items, scale, v => `€${nf(v, 2)}`, true);
-    const mx = 100 * S.price / scale;
-    cb.insertAdjacentHTML('beforeend', `<div class="marker${mx > 70 ? ' flip' : ''}" style="left:${mx}%"><span>Off-take €${nf(S.price, 0)}</span></div>`);
-    document.getElementById('costTotal').textContent = `Production cost €${nf(m.lcom, 2)}/MWh at ${nf(S.wacc, 1)}% WACC. Capex recovery: H₂ plant €${nf(m.per.capH2, 1)}, methanation €${nf(m.per.capMeth, 1)}, ${m.isDac ? 'H₂ + CO₂ buffers' : 'buffer'} €${nf(m.per.capBuf, 1)}`;
+    drawCost(m);
 
     const payYear = (() => { let c = 0; for (let t = 0; t < m.cfs.length; t++) { c += m.cfs[t]; if (c >= 0 && t > 0) return t; } return null; })();
     document.getElementById('cfSub').textContent = payYear ? `Paid back in year ${payYear}` : 'Not paid back within the lifetime';
@@ -708,7 +808,7 @@ details.assume[open] summary::after { content: "Hide"; }
     rows.push([], ['LCOH BREAKDOWN', '', '$/kg H2']);
     [['Electricity', m.lc.elec], ['Capex', m.lc.capex], ['Stack replacement', m.lc.repl], ['Fixed O&M', m.lc.om], ['Water', m.lc.water]].forEach(r => rows.push([r[0], num(r[1])]));
     rows.push([], ['PRODUCTION COST BREAKDOWN', '', '€/MWh CH4']);
-    [['Capex recovery', m.per.capex], ['  of which H2 plant incl. stack replacement', m.per.capH2], ['  of which methanation', m.per.capMeth], ['  of which H2 and CO2 buffers', m.per.capBuf], ['Power', m.per.power], ['CO2', m.per.co2], ['Methanation O&M', m.per.react], ['Logistics & other', m.per.logi], ['H2 plant O&M & water', m.per.h2om]].forEach(r => rows.push([r[0], num(r[1])]));
+    costCats(m).forEach(c => { rows.push([c.n, num(c.v), `${Math.round(100 * c.v / m.lcom)}% of cost`, c.cap > 0 ? `${Math.round(100 * c.cap / c.v)}% capital` : '']); c.parts.forEach(p => rows.push(['  ' + p.n + (p.cap ? ' (capital)' : ''), num(p.v)])); });
     rows.push([], ['CASH FLOW', '', '€'], ['Year', 'Net cash flow', 'Stack replacement', 'Cumulative']);
     let cum = 0; m.cfs.forEach((c, t) => { cum += c; rows.push([t, num(c), num(m.repl[t] || 0), num(cum)]); });
     const csv = '﻿' + rows.map(r => r.map(q).join(',')).join('\r\n');

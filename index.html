@@ -1,0 +1,593 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>E-Methane Cost | Project Calculator</title>
+<meta name="description" content="Client-side project calculator for solar-powered e-methane: CO2 supply, solar power price and H2 plant capex in; LCOH, production cost, plant size, capex and unlevered IRR out.">
+<link rel="canonical" href="https://guffi.github.io/emethane/">
+<style>
+/* Layout: H2 Cost family look. Header, then a two-column grid: inputs and charts on the left, a sticky results column on the right. One column on phones, results first. */
+:root {
+  --bg: #f6f8f7; --panel: #ffffff; --panel-soft: #fbfcfb;
+  --text: #17211f; --muted: #66736f; --border: #dfe6e3; --border-strong: #cbd7d3;
+  --accent: #0f766e; --accent-strong: #0b5f59; --accent-soft: #dff3ef;
+  --offtake: #c2410c; --offtake-soft: #fdf1e7; --offtake-line: #f3c9a8;
+  --good: #15803d; --good-soft: #e3f4e8; --bad: #b42318; --bad-soft: #fbe9e7; --warn: #a16207; --warn-soft: #fdf4d6;
+  --s-power: #147d75; --s-co2: #5b8ea6; --s-h2om: #b5892d; --s-react: #8b5fbf; --s-logi: #8a9a95; --s-capex: #2f6fab;
+  --grid: #e8eeec; --axis: #b7c4c0;
+  --radius: 8px;
+  --font: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0e1413; --panel: #151d1c; --panel-soft: #18211f;
+  --text: #e5eeeb; --muted: #94a39f; --border: #25312e; --border-strong: #34433f;
+  --accent: #2fb3a6; --accent-strong: #63d1c5; --accent-soft: #123430;
+  --offtake: #f28a4c; --offtake-soft: #33221a; --offtake-line: #6b3a1f;
+  --good: #4ade80; --good-soft: #15301f; --bad: #f87171; --bad-soft: #3a1b1a; --warn: #facc15; --warn-soft: #362d0e;
+  --s-power: #2fb3a6; --s-co2: #79aec6; --s-h2om: #d4a64a; --s-react: #a98ad6; --s-logi: #7d8c88; --s-capex: #5b93cf;
+  --grid: #222d2a; --axis: #3d4c48; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #0e1413; --panel: #151d1c; --panel-soft: #18211f;
+  --text: #e5eeeb; --muted: #94a39f; --border: #25312e; --border-strong: #34433f;
+  --accent: #2fb3a6; --accent-strong: #63d1c5; --accent-soft: #123430;
+  --offtake: #f28a4c; --offtake-soft: #33221a; --offtake-line: #6b3a1f;
+  --good: #4ade80; --good-soft: #15301f; --bad: #f87171; --bad-soft: #3a1b1a; --warn: #facc15; --warn-soft: #362d0e;
+  --s-power: #2fb3a6; --s-co2: #79aec6; --s-h2om: #d4a64a; --s-react: #a98ad6; --s-logi: #7d8c88; --s-capex: #5b93cf;
+  --grid: #222d2a; --axis: #3d4c48; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+[hidden] { display: none !important; }
+body { background: var(--bg); color: var(--text); font-family: var(--font); font-size: 14px; line-height: 1.45; }
+.wrap { max-width: 1160px; margin: 0 auto; padding-block: 28px 56px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+header.top { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap; margin-bottom: 20px; }
+header.top h1 { font-size: 34px; letter-spacing: -0.02em; margin: 0 0 6px; line-height: 1.1; }
+header.top p { margin: 0; color: var(--muted); max-width: 62ch; font-size: 15px; }
+.btn { font: inherit; font-size: 14px; background: var(--panel); color: var(--text); border: 1px solid var(--border-strong); border-radius: var(--radius); padding: 8px 12px; cursor: pointer; }
+.btn:hover { border-color: var(--accent); }
+.btn:focus-visible, input:focus-visible, .seg button:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.top-actions { display: flex; gap: 8px; align-items: center; }
+.copied { color: var(--accent-strong); font-size: 13px; }
+
+.layout { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 16px; align-items: start; }
+.main { display: grid; gap: 16px; min-width: 0; }
+.side { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 16px); display: grid; gap: 12px; min-width: 0; }
+@media (max-width: 900px) { .layout { grid-template-columns: minmax(0, 1fr); } .side { position: static; order: -1; } }
+
+.panel { background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 18px; min-width: 0; }
+.panel h2 { font-size: 17px; margin: 0 0 4px; text-wrap: balance; }
+.panel .sub { color: var(--muted); margin: 0 0 14px; font-size: 13px; }
+.panel-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+
+.group-label { font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.09em; color: var(--muted); font-weight: 700; margin: 14px 0 0; }
+.group-label:first-of-type { margin-top: 4px; }
+.row { display: grid; grid-template-columns: minmax(130px, 1fr) minmax(100px, 1.5fr) 80px 50px; gap: 12px; align-items: center; padding: 5px 0; }
+.row label, .row .lbl { font-weight: 600; font-size: 13px; }
+.row .note { display: block; font-weight: 400; color: var(--muted); font-size: 11.5px; }
+.row .unit { color: var(--muted); font-size: 12px; }
+input[type=range] { width: 100%; accent-color: var(--accent); height: 16px; }
+input[type=number] { width: 100%; font: inherit; font-size: 14px; text-align: right; padding: 4px 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--panel-soft); color: var(--text); font-variant-numeric: tabular-nums; }
+input[type=number]:hover { border-color: var(--border-strong); }
+@media (max-width: 560px) {
+  .row { grid-template-columns: minmax(0, 1fr) 80px 46px; gap: 4px 10px; }
+  .row > :first-child { grid-column: 1 / -1; }
+  .row input[type=range] { grid-column: 1; }
+}
+.seg { justify-self: start; display: inline-flex; border: 1px solid var(--border-strong); border-radius: 999px; padding: 3px; gap: 3px; background: var(--panel-soft); }
+.seg button { font: inherit; font-size: 13px; border: 0; background: transparent; color: var(--text); padding: 5px 14px; border-radius: 999px; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--accent-soft); color: var(--accent-strong); font-weight: 700; box-shadow: inset 0 0 0 1px var(--accent); }
+
+.lcoh-inline { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin: 6px 0 2px; padding: 7px 12px; border-radius: 6px; background: var(--accent-soft); color: var(--accent-strong); font-size: 13px; }
+.lcoh-inline b { font-size: 16px; font-variant-numeric: tabular-nums; }
+
+.pricepair { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 8px; }
+.pc { border-radius: var(--radius); padding: 12px 14px; min-width: 0; }
+.pc .lab { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700; }
+.pc .val { font-size: 28px; font-weight: 800; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; line-height: 1.2; color: var(--text); }
+.pc .val small { font-size: 13px; font-weight: 600; color: var(--muted); margin-left: 2px; }
+.pc .nt { font-size: 12px; color: var(--muted); }
+.pc.cost { background: var(--accent-soft); } .pc.cost .lab { color: var(--accent-strong); }
+.pc.off { background: var(--offtake-soft); } .pc.off .lab { color: var(--offtake); }
+.pc .nt b { font-variant-numeric: tabular-nums; }
+.panel.offtake input[type=range] { accent-color: var(--offtake); }
+@media (max-width: 420px) { .pricepair { grid-template-columns: 1fr; } }
+
+.gauge-card { grid-column: 1 / -1; background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; }
+.gauge-card .ghead { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+#gauge svg { display: block; width: 100%; max-width: 320px; height: auto; margin: 4px auto 0; }
+.targets { width: 100%; border-collapse: collapse; font-size: 12.5px; margin-top: 6px; font-variant-numeric: tabular-nums; }
+.targets th { text-align: left; font-weight: 600; color: var(--muted); font-size: 11px; padding: 4px 0; border-bottom: 1px solid var(--border); }
+.targets th:not(:first-child), .targets td:not(:first-child) { text-align: right; }
+.targets td { padding: 5px 0; border-bottom: 1px solid var(--border); }
+.targets tr:last-child td { border-bottom: 0; }
+.targets tr.hit td { color: var(--muted); }
+.targets .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
+.kpi.wide { grid-column: 1 / -1; display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+
+.hero { background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px 20px; }
+.eyebrow { font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); font-weight: 700; }
+.big { display: flex; align-items: baseline; gap: 6px; margin: 2px 0 12px; }
+.big .num { font-size: 64px; font-weight: 800; letter-spacing: -0.04em; line-height: 1; font-variant-numeric: tabular-nums; }
+.big .per { font-size: 22px; color: var(--muted); font-weight: 700; }
+.stack { display: flex; height: 14px; border-radius: 4px; overflow: hidden; background: var(--grid); }
+.stack span { display: block; height: 100%; min-width: 0; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 10px; font-size: 12.5px; color: var(--muted); }
+.legend i { display: inline-block; width: 9px; height: 9px; border-radius: 2px; margin-right: 5px; vertical-align: 0; }
+.legend b { color: var(--text); font-variant-numeric: tabular-nums; }
+
+.kpis { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.kpi { background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; min-width: 0; }
+.kpi .v { font-size: 26px; font-weight: 750; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; line-height: 1.15; }
+.kpi .v small { font-size: 14px; color: var(--muted); font-weight: 600; margin-left: 3px; }
+.kpi .k { color: var(--muted); font-size: 12.5px; margin-top: 2px; }
+.pill { display: inline-block; font-size: 11.5px; font-weight: 700; padding: 2px 8px; border-radius: 999px; margin-top: 6px; }
+.pill.good { background: var(--good-soft); color: var(--good); }
+.pill.bad { background: var(--bad-soft); color: var(--bad); }
+.pill.ok { background: var(--warn-soft); color: var(--warn); }
+.pill.vgood { background: var(--good-soft); color: var(--good); box-shadow: inset 0 0 0 1.5px var(--good); }
+.pill.great { background: var(--good); color: var(--panel); }
+.rating { font-weight: 700; margin-left: 4px; }
+.minor { background: var(--panel-soft); border: 1px solid var(--border); border-radius: var(--radius); padding: 6px 16px; margin: 0; }
+.minor div { display: flex; justify-content: space-between; gap: 12px; padding: 7px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+.minor div:last-child { border-bottom: 0; }
+.minor dt { color: var(--muted); }
+.minor dd { margin: 0; font-weight: 600; font-variant-numeric: tabular-nums; text-align: right; }
+
+.chart { width: 100%; overflow: hidden; }
+.chart svg { display: block; width: 100%; height: auto; }
+.chart text { font-family: var(--font); }
+
+.costbar { position: relative; margin: 26px 0 6px; }
+.costbar .stack { height: 30px; border-radius: 6px; }
+.costbar .stack span { color: #fff; font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center; overflow: hidden; white-space: nowrap; }
+.marker { position: absolute; top: -22px; bottom: -6px; width: 0; border-left: 2px solid var(--offtake); }
+.marker span { position: absolute; top: 0; left: 6px; white-space: nowrap; font-size: 12px; font-weight: 700; color: var(--offtake); }
+.marker.flip span { left: auto; right: 6px; }
+
+details.assume summary { cursor: pointer; font-size: 17px; font-weight: 700; list-style: none; display: flex; justify-content: space-between; align-items: center; }
+details.assume summary::-webkit-details-marker { display: none; }
+details.assume summary::after { content: "Show"; font-size: 13px; font-weight: 600; color: var(--accent-strong); }
+details.assume[open] summary::after { content: "Hide"; }
+.agrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 4px 24px; margin-top: 14px; }
+.afield { display: grid; grid-template-columns: minmax(0, 1fr) 92px; gap: 4px 10px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border); }
+.afield label { font-weight: 600; font-size: 13px; }
+.afield .unit { grid-column: 1 / -1; color: var(--muted); font-size: 12px; margin-top: -4px; }
+.afield input[type=number] { font-size: 14px; padding: 5px 8px; }
+.ahead { grid-column: 1 / -1; margin-top: 12px; }
+.foot { color: var(--muted); font-size: 12.5px; margin-top: 18px; max-width: 80ch; }
+@media (prefers-reduced-motion: no-preference) { .stack span { transition: flex-basis .25s ease; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1>E-Methane Cost</h1>
+      <p>Project calculator for solar-powered e-methane. Electrolysis, methanation and CO₂ supply run as one project with one cash flow. Change the inputs and watch the hydrogen cost, plant size and IRR move.</p>
+    </div>
+    <div class="top-actions">
+      <span class="copied" id="copied" hidden>Link copied</span>
+      <button class="btn" id="copyBtn" type="button">Copy scenario link</button>
+    </div>
+  </header>
+
+  <div class="layout">
+    <div class="main">
+      <section class="panel" aria-labelledby="h-inputs">
+        <h2 id="h-inputs">Main inputs</h2>
+        <div class="group-label">CO₂</div>
+        <div id="g-co2"></div>
+        <div class="group-label">Hydrogen and power</div>
+        <div id="g-h2"></div>
+        <div class="lcoh-inline"><span>Hydrogen cost from these inputs</span><b id="lcohInline">–</b></div>
+        <div class="group-label">Finance</div>
+        <div id="g-fin"></div>
+      </section>
+
+      <section class="panel offtake" aria-labelledby="h-off">
+        <h2 id="h-off" hidden>Production cost and off-take price</h2>
+        <div class="pricepair">
+          <div class="pc cost"><div class="lab">Production cost (LCOM)</div><div class="val" id="lcomBig">–</div><div class="nt" id="lcomNote">break-even, incl. return at WACC</div></div>
+          <div class="pc off"><div class="lab">Off-take price</div><div class="val" id="offBig">–</div><div class="nt">margin <b id="offMargin">–</b></div></div>
+        </div>
+        <div id="g-off"></div>
+      </section>
+
+      <section class="panel" aria-labelledby="h-cost">
+        <div class="panel-head"><h2 id="h-cost">What each MWh of e-methane costs</h2><span class="sub" id="costTotal"></span></div>
+        <div class="costbar" id="costbar"></div>
+        <div class="legend" id="costLegend"></div>
+      </section>
+
+      <section class="panel" aria-labelledby="h-cf">
+        <div class="panel-head"><h2 id="h-cf">Cash flow</h2><span class="sub" id="cfSub"></span></div>
+        <div class="chart" id="cfChart" role="img" aria-label="Net and cumulative cash flow by year"></div>
+      </section>
+
+      <section class="panel">
+        <details class="assume" id="assume">
+          <summary>Assumptions</summary>
+          <div class="agrid" id="agrid"></div>
+          <div style="margin-top:14px"><button class="btn" id="resetBtn" type="button">Reset all inputs</button></div>
+          <p class="foot">Real terms, pre-tax, unlevered: the IRR assumes no debt, so it is the project return before leverage. Rating bands for the unlevered IRR: under 10% weak, 10–15% OK, 15–20% good, 20–25% very good, 25% and up great. All capex in year 0, operation in years 1 to lifetime. Methane in MWh (LHV, 13.89 MWh/t). CO₂ and H₂ use are stoichiometric (CO₂ + 4 H₂ → CH₄ + 2 H₂O). Electrolyzer and methanation run at the solar capacity factor, so plant size scales with 1 / capacity factor. All power is bought at the solar price, including DAC power when the CO₂ source is DAC. The H₂ plant is costed in USD and converted at the exchange rate. Stacks are replaced when cumulative run hours pass the replacement interval.</p>
+        </details>
+      </section>
+    </div>
+
+    <aside class="side" aria-label="Results">
+      <div class="hero">
+        <div class="eyebrow">Levelized cost of hydrogen</div>
+        <div class="big"><span class="num" id="lcoh">–</span><span class="per">/kg-H₂</span></div>
+        <div class="stack" id="lcohStack"></div>
+        <div class="legend" id="lcohLegend"></div>
+      </div>
+      <div class="kpis">
+        <div class="kpi"><div class="v" id="kPower">–</div><div class="k">Installed power, sized to the capacity factor</div></div>
+        <div class="kpi"><div class="v" id="kCapex">–</div><div class="k">Total capex, H₂ plant + methanation</div></div>
+        <div class="gauge-card">
+          <div class="ghead"><span class="eyebrow">Project IRR, unlevered</span><span class="pill" id="kIrrPill"></span></div>
+          <div id="gauge" role="img" aria-label="Unlevered IRR gauge"></div>
+          <table class="targets"><thead><tr><th>To reach</th><th>Off-take price</th><th>or solar power</th></tr></thead><tbody id="targets"></tbody></table>
+        </div>
+        <div class="kpi wide"><div><div class="k" style="margin:0">E-methane output</div></div><div class="v" id="kOut">–</div></div>
+      </div>
+      <dl class="minor" id="minor"></dl>
+    </aside>
+  </div>
+</div>
+
+<script>
+(function () {
+  // ---------- inputs ----------
+  const MAIN = [
+    { k: 'co2', g: 'co2', label: 'CO₂ supply', unit: 't/yr', min: 100, max: 100000, log: true, def: 2000, dp: 0 },
+    { k: 'src', g: 'co2', label: 'CO₂ source', type: 'seg', options: ['Biogenic', 'DAC'], def: 'Biogenic' },
+    { k: 'cc', g: 'co2', label: 'CO₂ cost', note: 'excluding DAC power', unit: '€/t', min: 0, max: 400, step: 5, def: 130, dp: 0 },
+    { k: 'pw', g: 'h2', label: 'Solar power price', unit: '$/MWh', min: 0, max: 150, step: 1, def: 20, dp: 1 },
+    { k: 'cf', g: 'h2', label: 'Capacity factor', note: 'sets run hours and plant size', unit: '%', min: 5, max: 100, step: 1, def: 25, dp: 0 },
+    { k: 'h2c', g: 'h2', label: 'H₂ plant capex', note: 'total installed', unit: '$/kW', min: 100, max: 3000, step: 10, def: 300, dp: 0 },
+    { k: 'wacc', g: 'fin', label: 'Cost of capital (WACC)', unit: '%', min: 2, max: 20, step: 0.5, def: 8, dp: 1 },
+    { k: 'price', g: 'off', label: 'Off-take price', note: 'per MWh of e-methane', unit: '€/MWh', min: 40, max: 400, step: 5, def: 180, dp: 0 },
+  ];
+  const ASSUME = [
+    { head: 'Project' },
+    { k: 'life', label: 'Project lifetime', unit: 'years', def: 20, min: 1, max: 40, step: 1 },
+    { k: 'fx', label: 'Exchange rate', unit: 'USD per EUR', def: 1.15, min: 0.5, max: 2, step: 0.01 },
+    { head: 'Electrolyzer' },
+    { k: 'sec', label: 'Specific energy', unit: 'kWh/kg H₂, system level', def: 50, min: 30, max: 80, step: 0.5 },
+    { k: 'ce', label: 'Compression energy', unit: 'kWh/kg H₂', def: 2, min: 0, max: 10, step: 0.1 },
+    { k: 'om', label: 'H₂ plant fixed O&M', unit: '% of H₂ plant capex per year', def: 3, min: 0, max: 10, step: 0.1 },
+    { k: 'ri', label: 'Stack replacement interval', unit: 'run hours', def: 80000, min: 10000, max: 200000, step: 1000 },
+    { k: 'rc', label: 'Stack replacement cost', unit: '% of H₂ plant capex', def: 40, min: 0, max: 100, step: 1 },
+    { k: 'wl', label: 'Water use', unit: 'L/kg H₂', def: 10, min: 0, max: 40, step: 0.5 },
+    { k: 'wp', label: 'Water cost', unit: '$/m³', def: 2, min: 0, max: 20, step: 0.1 },
+    { head: 'Methanation and other' },
+    { k: 'mc', label: 'Methanation capex', unit: '€ per MWh/yr of nameplate capacity', def: 110, min: 0, max: 1000, step: 5 },
+    { k: 'fom', label: 'Methanation fixed O&M', unit: '€/MWh CH₄', def: 5, min: 0, max: 50, step: 0.5 },
+    { k: 'vrc', label: 'Variable reaction cost', unit: '€/MWh CH₄ (catalyst, utilities)', def: 5, min: 0, max: 50, step: 0.5 },
+    { k: 'mp', label: 'Methanation power', unit: 'MWh per MWh CH₄', def: 0.02, min: 0, max: 0.5, step: 0.005 },
+    { k: 'log', label: 'Logistics', unit: '€/MWh CH₄ (compression, injection, transport)', def: 8, min: 0, max: 60, step: 0.5 },
+    { k: 'oth', label: 'Other fixed costs', unit: '€/MWh CH₄ (staff, insurance, land)', def: 4, min: 0, max: 60, step: 0.5 },
+    { k: 'dac', label: 'DAC energy', unit: 'MWh per t CO₂, used when source is DAC', def: 3, min: 0, max: 10, step: 0.1 },
+  ];
+  const ALL = [...MAIN, ...ASSUME.filter(a => a.k)];
+  const S = {};
+  ALL.forEach(a => { S[a.k] = a.def; });
+
+  // ---------- model ----------
+  const CO2_PER = 44.01 / 16.04 / 13.89;        // t CO2 per MWh CH4
+  const H2_PER = 4 * 2.016 / 16.04 / 13.89 * 1000; // kg H2 per MWh CH4
+
+  function npvAt(cfs, rate) { let v = 0; for (let t = 0; t < cfs.length; t++) v += cfs[t] / Math.pow(1 + rate, t); return v; }
+  function irr(cfs) {
+    let lo = -0.95, hi = 5, flo = npvAt(cfs, lo), fhi = npvAt(cfs, hi);
+    if (!isFinite(flo) || !isFinite(fhi) || flo * fhi > 0) return NaN;
+    for (let i = 0; i < 200; i++) { const mid = (lo + hi) / 2, f = npvAt(cfs, mid); if (Math.abs(f) < 1e-9) return mid; if (f * flo > 0) { lo = mid; flo = f; } else hi = mid; }
+    return (lo + hi) / 2;
+  }
+
+  function model(s) {
+    const r = s.wacc / 100, n = Math.max(1, Math.round(s.life)), cf = s.cf / 100, fx = s.fx;
+    const out = s.co2 / CO2_PER;                 // MWh CH4 per year
+    const hours = 8760 * cf;
+    const nameplate = out / cf;                  // MWh/yr at full load
+    const h2t = out * H2_PER / 1000;             // t H2 per year
+    const elecMW = h2t * s.sec / hours;
+    const h2CapEUR = elecMW * 1000 * s.h2c / fx;
+    const methCapEUR = s.mc * nameplate;
+    const capex = h2CapEUR + methCapEUR;
+    const ann = r === 0 ? n : (1 - Math.pow(1 + r, -n)) / r;
+    const kgPerKW = hours / s.sec;
+    const repl = [0];
+    for (let t = 1; t <= n; t++) repl.push(t < n && Math.floor(t * hours / s.ri) > Math.floor((t - 1) * hours / s.ri) ? s.rc / 100 * h2CapEUR : 0);
+    let pvRepl = 0; for (let t = 1; t <= n; t++) pvRepl += repl[t] / Math.pow(1 + r, t);
+    const lc = {
+      elec: (s.sec + s.ce) * s.pw / 1000,
+      capex: s.h2c / ann / kgPerKW,
+      om: s.om / 100 * s.h2c / kgPerKW,
+      water: s.wl * s.wp / 1000,
+      repl: h2t > 0 ? pvRepl * fx / (h2t * 1000 * ann) : 0,
+    };
+    const lcoh = lc.elec + lc.capex + lc.om + lc.water + lc.repl;
+    const elecG = h2t * (s.sec + s.ce) / 1000, methG = out / 1000 * s.mp, dacG = s.src === 'DAC' ? s.co2 * s.dac / 1000 : 0;
+    const powG = elecG + methG + dacG;
+    const instMW = powG * 1000 / hours;
+    const per = {
+      power: powG * 1000 / out * s.pw / fx,
+      co2: CO2_PER * s.cc,
+      h2om: (s.om / 100 * h2CapEUR + h2t * s.wl * s.wp / fx) / out,
+      react: s.fom + s.vrc,
+      logi: s.log + s.oth,
+    };
+    const opex = per.power + per.co2 + per.h2om + per.react + per.logi;
+    const cfs = [-capex]; for (let t = 1; t <= n; t++) cfs.push(out * (s.price - opex) - repl[t]);
+    const irrV = irr(cfs);
+    const npv = npvAt(cfs, r);
+    const lcom = (capex + out * opex * ann + pvRepl) / (out * ann);
+    per.capex = lcom - opex;
+    const yr1 = out * (s.price - opex);
+    return { out, hours, nameplate, h2t, elecMW, h2CapEUR, methCapEUR, capex, lc, lcoh, powG, elecG, methG, dacG, instMW, per, opex, cfs, irr: irrV, npv, lcom, payback: yr1 > 0 ? capex / yr1 : Infinity, r, n, repl };
+  }
+  window.__model = model;
+
+  // ---------- formatting ----------
+  const nf = (v, dp) => isFinite(v) ? v.toLocaleString('en-US', { minimumFractionDigits: dp, maximumFractionDigits: dp }) : '–';
+  const eurM = v => `€${nf(v / 1e6, v >= 1e8 ? 0 : v >= 1e7 ? 1 : 2)}M`;
+  const pct = v => isFinite(v) ? `${nf(v * 100, 1)}%` : 'n/a';
+  function energy(mwh) {
+    if (mwh >= 1e6) return [nf(mwh / 1e6, 2), 'TWh/yr'];
+    if (mwh >= 1e3) return [nf(mwh / 1e3, mwh >= 1e5 ? 0 : 1), 'GWh/yr'];
+    return [nf(mwh, 0), 'MWh/yr'];
+  }
+  const mw = v => v >= 100 ? [nf(v, 0), 'MW'] : v >= 1 ? [nf(v, 1), 'MW'] : [nf(v * 1000, 0), 'kW'];
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+  // ---------- build controls ----------
+  const toSlider = (a, v) => a.log ? 1000 * Math.log(v / a.min) / Math.log(a.max / a.min) : v;
+  const fromSlider = (a, x) => { if (!a.log) return +x; const v = a.min * Math.pow(a.max / a.min, x / 1000); const mag = Math.pow(10, Math.floor(Math.log10(v)) - 1); return Math.round(v / mag) * mag; };
+
+  function buildMain() {
+    MAIN.forEach(a => {
+      const host = document.getElementById('g-' + a.g);
+      const row = document.createElement('div'); row.className = 'row';
+      const note = a.note ? `<span class="note">${esc(a.note)}</span>` : '';
+      if (a.type === 'seg') {
+        row.innerHTML = `<span class="lbl">${esc(a.label)}<span class="note">DAC adds ${'<span id="dacNote"></span>'} of power per t CO₂</span></span><div class="seg" role="group" aria-label="${esc(a.label)}">${a.options.map(o => `<button type="button" data-v="${o}" id="seg-${o}">${o}</button>`).join('')}</div><span></span><span></span>`;
+        row.querySelectorAll('button').forEach(b => b.addEventListener('click', () => { S[a.k] = b.dataset.v; update(); }));
+      } else {
+        const sMin = a.log ? 0 : a.min, sMax = a.log ? 1000 : a.max, sStep = a.log ? 1 : a.step;
+        row.innerHTML = `<label for="n-${a.k}">${esc(a.label)}${note}</label><input type="range" id="r-${a.k}" min="${sMin}" max="${sMax}" step="${sStep}" aria-label="${esc(a.label)} slider"><input type="number" id="n-${a.k}" step="any" inputmode="decimal"><span class="unit">${esc(a.unit)}</span>`;
+        const rng = row.querySelector('input[type=range]'), num = row.querySelector('input[type=number]');
+        rng.addEventListener('input', () => { S[a.k] = fromSlider(a, rng.value); update(rng); });
+        num.addEventListener('input', () => { const v = parseFloat(num.value); if (isFinite(v) && v >= 0) { S[a.k] = v; update(num); } });
+      }
+      host.appendChild(row);
+    });
+  }
+  function buildAssume() {
+    const g = document.getElementById('agrid');
+    ASSUME.forEach(a => {
+      if (a.head) { const h = document.createElement('div'); h.className = 'group-label ahead'; h.textContent = a.head; g.appendChild(h); return; }
+      const f = document.createElement('div'); f.className = 'afield';
+      f.innerHTML = `<label for="a-${a.k}">${esc(a.label)}</label><input type="number" id="a-${a.k}" step="${a.step}" min="${a.min}" max="${a.max}" inputmode="decimal"><span class="unit">${esc(a.unit)}</span>`;
+      const inp = f.querySelector('input');
+      inp.addEventListener('input', () => { const v = parseFloat(inp.value); if (isFinite(v) && v >= 0 && !(a.k === 'life' && v < 1) && !(['sec', 'ri', 'fx'].includes(a.k) && v <= 0)) { S[a.k] = v; update(inp); } });
+      g.appendChild(f);
+    });
+  }
+
+  function syncControls(skip) {
+    MAIN.forEach(a => {
+      if (a.type === 'seg') { a.options.forEach(o => document.getElementById('seg-' + o).setAttribute('aria-pressed', String(S[a.k] === o))); return; }
+      const r = document.getElementById('r-' + a.k), n = document.getElementById('n-' + a.k);
+      if (r !== skip) r.value = toSlider(a, Math.min(a.max, Math.max(a.min, S[a.k])));
+      if (n !== skip) n.value = +(+S[a.k]).toFixed(a.dp);
+    });
+    ASSUME.forEach(a => { if (!a.k) return; const i = document.getElementById('a-' + a.k); if (i !== skip) i.value = S[a.k]; });
+    document.getElementById('dacNote').textContent = `${nf(S.dac, 1)} MWh`;
+  }
+
+  // ---------- charts ----------
+  const W = el => Math.max(300, Math.round(el.clientWidth || 640));
+  function niceTicks(lo, hi, count) {
+    const span = hi - lo || 1, raw = span / count, p = Math.pow(10, Math.floor(Math.log10(raw)));
+    const step = p * [1, 2, 2.5, 5, 10].find(m => m * p >= raw);
+    const out = []; for (let v = Math.floor(lo / step) * step; v <= hi + step * 1e-9; v += step) out.push(+v.toFixed(10));
+    if (out[out.length - 1] < hi) out.push(out[out.length - 1] + step);
+    return out;
+  }
+
+  function drawIrr(m) {
+    const el = document.getElementById('irrChart'), w = W(el), h = 250;
+    const lo = Math.max(0, S.price - 100), hi = S.price + 100, N = 60;
+    const pts = [];
+    for (let i = 0; i <= N; i++) {
+      const p = lo + (hi - lo) * i / N;
+      const cfs = m.cfs.map((c, t) => t === 0 ? c : c + m.out * (p - S.price));
+      const v = irr(cfs); if (isFinite(v) && v > -0.5 && v < 2) pts.push([p, v]);
+    }
+    const ys = [0, m.r, ...pts.map(p => p[1])];
+    const ticks = niceTicks(Math.min(...ys), Math.max(...ys), 4);
+    const L = 52, R = 18, T = 18, B = 38, iw = w - L - R, ih = h - T - B;
+    const X = p => L + iw * (p - lo) / (hi - lo), Y = v => T + ih - ih * (v - ticks[0]) / (ticks[ticks.length - 1] - ticks[0]);
+    let s = `<svg viewBox="0 0 ${w} ${h}" width="${w}" height="${h}">`;
+    ticks.forEach(t => { s += `<line x1="${L}" x2="${w - R}" y1="${Y(t)}" y2="${Y(t)}" stroke="var(${t === 0 ? '--axis' : '--grid'})"/><text x="${L - 8}" y="${Y(t) + 4}" text-anchor="end" font-size="12" fill="var(--muted)">${nf(t * 100, 0)}%</text>`; });
+    niceTicks(lo, hi, 6).filter(p => p >= lo && p <= hi).forEach(p => { s += `<text x="${X(p)}" y="${h - B + 18}" text-anchor="middle" font-size="12" fill="var(--muted)">€${nf(p, 0)}</text>`; });
+    s += `<text x="${L + iw / 2}" y="${h - 4}" text-anchor="middle" font-size="12" fill="var(--muted)">Off-take price, €/MWh</text>`;
+    s += `<line x1="${L}" x2="${w - R}" y1="${Y(m.r)}" y2="${Y(m.r)}" stroke="var(--muted)" stroke-width="1.5" stroke-dasharray="5 4"/><text x="${w - R}" y="${Y(m.r) - 6}" text-anchor="end" font-size="12" fill="var(--muted)">WACC ${nf(S.wacc, 1)}%</text>`;
+    if (pts.length > 1) s += `<polyline points="${pts.map(p => `${X(p[0]).toFixed(1)},${Y(p[1]).toFixed(1)}`).join(' ')}" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linejoin="round"/>`;
+    if (isFinite(m.lcom) && m.lcom >= lo && m.lcom <= hi) s += `<circle cx="${X(m.lcom)}" cy="${Y(m.r)}" r="4.5" fill="var(--panel)" stroke="var(--text)" stroke-width="2"/><text x="${X(m.lcom)}" y="${Y(m.r) + 18}" text-anchor="middle" font-size="12" fill="var(--text)">break-even €${nf(m.lcom, 0)}</text>`;
+    if (isFinite(m.irr)) s += `<line x1="${X(S.price)}" x2="${X(S.price)}" y1="${T}" y2="${T + ih}" stroke="var(--offtake)" stroke-opacity="0.35"/><circle cx="${X(S.price)}" cy="${Y(m.irr)}" r="6" fill="var(--offtake)"/><text x="${X(S.price) + 10}" y="${Y(m.irr) - 8}" font-size="13" font-weight="700" fill="var(--offtake)">${pct(m.irr)}</text>`;
+    el.innerHTML = s + '</svg>';
+  }
+
+  function drawCf(m) {
+    const el = document.getElementById('cfChart'), w = W(el), h = 260;
+    const vals = m.cfs.map(v => v / 1e6); let cum = 0; const cums = vals.map(v => (cum += v));
+    const ticks = niceTicks(Math.min(0, ...vals, ...cums), Math.max(0, ...vals, ...cums), 4);
+    const fmtT = t => `€${nf(t, Math.abs(ticks[1] - ticks[0]) < 1 ? 1 : 0)}M`;
+    const L = 16 + 8 * Math.max(...ticks.map(t => fmtT(t).length)), R = 12, T = 14, B = 46, iw = w - L - R, ih = h - T - B;
+    const n = vals.length, band = iw / n, bar = Math.min(18, band * 0.62);
+    const Y = v => T + ih - ih * (v - ticks[0]) / (ticks[ticks.length - 1] - ticks[0]), cx = i => L + band * i + band / 2;
+    let s = `<svg viewBox="0 0 ${w} ${h}" width="${w}" height="${h}">`;
+    ticks.forEach(t => { s += `<line x1="${L}" x2="${w - R}" y1="${Y(t)}" y2="${Y(t)}" stroke="var(${t === 0 ? '--axis' : '--grid'})"/><text x="${L - 8}" y="${Y(t) + 4}" text-anchor="end" font-size="12" fill="var(--muted)">${fmtT(t)}</text>`; });
+    const every = Math.ceil(26 / band);
+    vals.forEach((v, i) => {
+      const y0 = Y(0), y1 = Y(v), top = Math.min(y0, y1), hh = Math.max(1, Math.abs(y1 - y0));
+      s += `<rect x="${cx(i) - bar / 2}" y="${top}" width="${bar}" height="${hh}" rx="2" fill="var(${v < 0 ? '--s-capex' : '--accent'})"><title>Year ${i}: €${nf(v, 2)}M, cumulative €${nf(cums[i], 2)}M</title></rect>`;
+      if (i % every === 0) s += `<text x="${cx(i)}" y="${T + ih + 16}" text-anchor="middle" font-size="11.5" fill="var(--muted)">${i}</text>`;
+    });
+    s += `<polyline points="${cums.map((c, i) => `${cx(i).toFixed(1)},${Y(c).toFixed(1)}`).join(' ')}" fill="none" stroke="var(--offtake)" stroke-width="2"/><circle cx="${cx(n - 1)}" cy="${Y(cums[n - 1])}" r="4" fill="var(--offtake)"/>`;
+    const ly = h - 10;
+    s += `<rect x="${L}" y="${ly - 9}" width="10" height="10" rx="2" fill="var(--accent)"/><text x="${L + 15}" y="${ly}" font-size="12" fill="var(--muted)">Net cash flow per year</text>`;
+    s += `<rect x="${L + 170}" y="${ly - 5}" width="14" height="2" fill="var(--offtake)"/><text x="${L + 190}" y="${ly}" font-size="12" fill="var(--muted)">Cumulative</text>`;
+    el.innerHTML = s + '</svg>';
+  }
+
+  function drawStack(hostId, legendId, items, total, fmt, labels) {
+    const host = document.getElementById(hostId);
+    const pos = items.map(it => ({ ...it, v: Math.max(0, it.v) }));
+    const sum = pos.reduce((a, b) => a + b.v, 0) || 1;
+    host.innerHTML = pos.map(it => `<span style="flex:0 0 ${100 * it.v / total}%;background:var(${it.c})" title="${esc(it.n)}: ${fmt(it.v)}">${labels && it.v / total > 0.09 ? Math.round(100 * it.v / sum) + '%' : ''}</span>`).join('');
+    document.getElementById(legendId).innerHTML = items.map(it => `<span><i style="background:var(${it.c})"></i>${esc(it.n)} <b>${fmt(it.v)}</b></span>`).join('');
+  }
+
+  // ---------- render ----------
+  function render() {
+    const m = model(S);
+    const lcohTxt = `$${nf(m.lcoh, 2)}`;
+    document.getElementById('lcoh').textContent = lcohTxt;
+    document.getElementById('lcohInline').textContent = `${lcohTxt}/kg`;
+    const lcItems = [
+      { n: 'Electricity', v: m.lc.elec, c: '--s-power' }, { n: 'Capex', v: m.lc.capex, c: '--s-capex' },
+      { n: 'Stack replacement', v: m.lc.repl, c: '--s-react' }, { n: 'Fixed O&M', v: m.lc.om, c: '--s-h2om' }, { n: 'Water', v: m.lc.water, c: '--s-co2' },
+    ];
+    drawStack('lcohStack', 'lcohLegend', lcItems, Math.max(m.lcoh, 1e-9), v => `$${nf(v, 2)}`, false);
+
+    const [pv, pu] = mw(m.instMW); document.getElementById('kPower').innerHTML = `${pv}<small>${pu}</small>`;
+    document.getElementById('kCapex').textContent = eurM(m.capex);
+    const pill = document.getElementById('kIrrPill');
+    const rate = !isFinite(m.irr) ? ['bad', 'Never pays back'] : m.irr >= 0.25 ? ['great', 'Great'] : m.irr >= 0.20 ? ['vgood', 'Very good'] : m.irr >= 0.15 ? ['good', 'Good'] : m.irr >= 0.10 ? ['ok', 'OK'] : ['bad', 'Weak'];
+    pill.className = 'pill ' + rate[0]; pill.textContent = rate[1];
+    pill.title = 'Unlevered IRR rating: under 10% weak, 10–15% OK, 15–20% good, 20–25% very good, 25%+ great';
+    drawGauge(m.irr); drawTargets(m);
+    const [ov, ou] = energy(m.out); document.getElementById('kOut').innerHTML = `${ov}<small>${ou}</small>`;
+
+    const [ev, eu] = mw(m.elecMW), [pg, pgu] = energy(m.powG * 1000);
+    document.getElementById('minor').innerHTML = [
+      ['NPV at WACC', eurM(m.npv).replace('€-', '-€')],
+      ['Production cost (LCOM)', `€${nf(m.lcom, 2)}/MWh`],
+      ['Simple payback', isFinite(m.payback) ? `${nf(m.payback, 1)} years` : 'never'],
+      ['Electrolyzer size', `${ev} ${eu}`],
+      ['H₂ plant capex', eurM(m.h2CapEUR)],
+      ['Methanation capex', eurM(m.methCapEUR)],
+      ['H₂ demand', `${nf(m.h2t, 0)} t/yr`],
+      ['Power use', `${pg} ${pgu}`],
+      ['Run hours', `${nf(m.hours, 0)} h/yr`],
+    ].map(([k, v]) => `<div><dt>${k}</dt><dd>${v}</dd></div>`).join('');
+
+    document.getElementById('lcomBig').innerHTML = `€${nf(m.lcom, 2)}<small>/MWh</small>`;
+    document.getElementById('lcomNote').textContent = `break-even, incl. ${nf(S.wacc, 1)}% WACC`;
+    document.getElementById('offBig').innerHTML = `€${nf(S.price, 0)}<small>/MWh</small>`;
+    const marg = S.price - m.lcom, mEl = document.getElementById('offMargin');
+    mEl.textContent = `${marg < 0 ? '−' : '+'}€${nf(Math.abs(marg), 2)}/MWh`; mEl.style.color = `var(${marg < 0 ? '--bad' : '--good'})`;
+
+    const items = [
+      { n: 'Capex recovery', v: m.per.capex, c: '--s-capex' }, { n: 'Power', v: m.per.power, c: '--s-power' },
+      { n: 'CO₂', v: m.per.co2, c: '--s-co2' }, { n: 'Reaction opex', v: m.per.react, c: '--s-react' },
+      { n: 'Logistics & other', v: m.per.logi, c: '--s-logi' }, { n: 'H₂ plant O&M & water', v: m.per.h2om, c: '--s-h2om' },
+    ].sort((a, b) => b.v - a.v);
+    const scale = Math.max(m.lcom, S.price) * 1.04;
+    const cb = document.getElementById('costbar');
+    cb.innerHTML = `<div class="stack" id="costStack"></div>`;
+    drawStack('costStack', 'costLegend', items, scale, v => `€${nf(v, 2)}`, true);
+    const mx = 100 * S.price / scale;
+    cb.insertAdjacentHTML('beforeend', `<div class="marker${mx > 70 ? ' flip' : ''}" style="left:${mx}%"><span>Off-take €${nf(S.price, 0)}</span></div>`);
+    document.getElementById('costTotal').textContent = `Production cost €${nf(m.lcom, 2)}/MWh at ${nf(S.wacc, 1)}% WACC`;
+
+    const payYear = (() => { let c = 0; for (let t = 0; t < m.cfs.length; t++) { c += m.cfs[t]; if (c >= 0 && t > 0) return t; } return null; })();
+    document.getElementById('cfSub').textContent = payYear ? `Paid back in year ${payYear}` : 'Not paid back within the lifetime';
+    drawCf(m);
+  }
+
+  // ---------- IRR gauge ----------
+  const BANDS = [
+    { lo: 0, hi: 0.10, c: '--bad', op: 0.55, name: 'Weak' },
+    { lo: 0.10, hi: 0.15, c: '--warn', op: 0.85, name: 'OK' },
+    { lo: 0.15, hi: 0.20, c: '--good', op: 0.45, name: 'Good' },
+    { lo: 0.20, hi: 0.25, c: '--good', op: 0.7, name: 'Very good' },
+    { lo: 0.25, hi: 0.30, c: '--good', op: 1, name: 'Great' },
+  ];
+  function drawGauge(v) {
+    const cx = 160, cy = 150, R = 128, r = 104, MAX = 0.30;
+    const ang = x => Math.PI * (1 - Math.min(MAX, Math.max(0, x)) / MAX);
+    const pt = (a, rad) => [cx + rad * Math.cos(a), cy - rad * Math.sin(a)];
+    const f = n => n.toFixed(2);
+    let s = `<svg viewBox="0 0 320 196" width="320" height="196">`;
+    BANDS.forEach(b => {
+      const a1 = ang(b.lo), a2 = ang(b.hi), [x1, y1] = pt(a1, R), [x2, y2] = pt(a2, R), [x3, y3] = pt(a2, r), [x4, y4] = pt(a1, r);
+      s += `<path d="M${f(x1)} ${f(y1)} A${R} ${R} 0 0 1 ${f(x2)} ${f(y2)} L${f(x3)} ${f(y3)} A${r} ${r} 0 0 0 ${f(x4)} ${f(y4)} Z" fill="var(${b.c})" fill-opacity="${b.op}"/>`;
+    });
+    [0, 0.10, 0.15, 0.20, 0.25, 0.30].forEach(t => {
+      const edge = t === 0 || t === 0.30, [x, y] = edge ? pt(ang(t), (R + r) / 2).map((q, i) => i ? q + 18 : q) : pt(ang(t), R + 12), [ix, iy] = pt(ang(t), R), [ox, oy] = pt(ang(t), r);
+      s += `<line x1="${f(ix)}" y1="${f(iy)}" x2="${f(ox)}" y2="${f(oy)}" stroke="var(--panel)" stroke-width="2"/>`;
+      s += `<text x="${f(x)}" y="${f(y + 4)}" text-anchor="${edge ? 'middle' : t < 0.14 ? 'end' : t > 0.16 ? 'start' : 'middle'}" font-size="11" fill="var(--muted)">${t === 0.30 ? '30%+' : Math.round(t * 100) + '%'}</text>`;
+    });
+    if (isFinite(v)) {
+      const a = ang(v), [nx, ny] = pt(a, r - 10), [bx1, by1] = pt(a + Math.PI / 2, 6), [bx2, by2] = pt(a - Math.PI / 2, 6);
+      s += `<polygon points="${f(nx)},${f(ny)} ${f(bx1)},${f(by1)} ${f(bx2)},${f(by2)}" fill="var(--text)"/><circle cx="${cx}" cy="${cy}" r="9" fill="var(--text)"/><circle cx="${cx}" cy="${cy}" r="3.5" fill="var(--panel)"/>`;
+    }
+    s += `<text x="${cx}" y="${cy + 38}" text-anchor="middle" font-size="30" font-weight="800" fill="var(--text)">${isFinite(v) ? pct(v) : 'n/a'}</text>`;
+    document.getElementById('gauge').innerHTML = s + '</svg>';
+  }
+
+  // What it takes to reach each band: the off-take price, or the solar power price at today's off-take.
+  function solve(key, target, lo, hi, up) {
+    const irrAt = x => model({ ...S, [key]: x }).irr;
+    const ok = x => { const v = irrAt(x); return isFinite(v) && v >= target; };
+    const good = up ? hi : lo, bad = up ? lo : hi;
+    if (!ok(good)) return null;
+    if (ok(bad)) return up ? -Infinity : Infinity;
+    let a = bad, b = good;
+    for (let i = 0; i < 50; i++) { const mid = (a + b) / 2; if (ok(mid)) b = mid; else a = mid; }
+    return b;
+  }
+  function drawTargets(m) {
+    const rows = BANDS.slice(1).map(b => {
+      const hit = isFinite(m.irr) && m.irr >= b.lo;
+      const p = solve('price', b.lo, 0, 3000, true);
+      const w = solve('pw', b.lo, 0, 400, false);
+      const pTxt = p === null ? 'not reachable' : `€${nf(Math.ceil(p), 0)}/MWh`;
+      const wTxt = w === null ? 'not reachable' : w === Infinity ? 'any price' : `≤ $${nf(Math.floor(w * 10) / 10, 1)}/MWh`;
+      return `<tr class="${hit ? 'hit' : ''}"><td><span class="dot" style="background:var(${b.c});opacity:${b.op}"></span>${b.name} ${Math.round(b.lo * 100)}%${hit ? ' ✓' : ''}</td><td>${pTxt}</td><td>${wTxt}</td></tr>`;
+    });
+    document.getElementById('targets').innerHTML = rows.join('');
+  }
+
+  // ---------- state in the link ----------
+  function readHash() {
+    try {
+      const h = location.hash.replace(/^#/, ''); if (!h.includes('=')) return;
+      new URLSearchParams(h).forEach((v, k) => { if (!(k in S)) return; if (k === 'src') { if (v === 'DAC' || v === 'Biogenic') S.src = v; } else { const x = parseFloat(v); if (isFinite(x) && x >= 0) S[k] = x; } });
+    } catch (e) {}
+  }
+  function scenarioHash() { return '#' + ALL.map(a => `${a.k}=${encodeURIComponent(S[a.k])}`).join('&'); }
+  function writeHash() { try { history.replaceState(null, '', scenarioHash()); } catch (e) {} }
+
+  let raf = 0, lastSkip = null;
+  function update(skip) { lastSkip = skip || null; syncControls(lastSkip); cancelAnimationFrame(raf); raf = requestAnimationFrame(() => { render(); writeHash(); }); }
+
+  document.getElementById('copyBtn').addEventListener('click', () => {
+    const url = location.href.split('#')[0] + scenarioHash(), note = document.getElementById('copied');
+    const done = t => { note.textContent = t; note.hidden = false; clearTimeout(note._t); note._t = setTimeout(() => { note.hidden = true; }, 2200); };
+    try { navigator.clipboard.writeText(url).then(() => done('Link copied'), () => done('Copy blocked here')); } catch (e) { done('Copy blocked here'); }
+  });
+  document.getElementById('resetBtn').addEventListener('click', () => { ALL.forEach(a => { S[a.k] = a.def; }); update(); });
+
+  buildMain(); buildAssume(); readHash(); syncControls(); render();
+  let rt = 0; window.addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(render, 120); });
+})();
+</script>
+</body>
+</html>

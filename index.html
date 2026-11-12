@@ -228,7 +228,7 @@ details.assume[open] summary::after { content: "Hide"; }
 .ahead { grid-column: 1 / -1; margin-top: 12px; }
 .site { position: relative; margin: 6px 0 4px; }
 .site-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
-.site-row input[type=search] { flex: 1 1 240px; min-width: 0; font: inherit; font-size: 14px; padding: 7px 10px; border: 1px solid var(--border-strong); border-radius: var(--radius); background: var(--panel); color: var(--text); }
+.site-row input[type=search] { flex: 1 1 180px; min-width: 0; font: inherit; font-size: 14px; padding: 7px 10px; border: 1px solid var(--border-strong); border-radius: var(--radius); background: var(--panel); color: var(--text); }
 .site-row select { font: inherit; font-size: 13px; padding: 6px 8px; border: 1px solid var(--border-strong); border-radius: var(--radius); background: var(--panel); color: var(--text); }
 .site-list { position: absolute; z-index: 30; left: 0; right: 0; top: 42px; margin: 0; padding: 4px; list-style: none; background: var(--panel); border: 1px solid var(--border-strong); border-radius: var(--radius); box-shadow: 0 8px 24px rgba(0,0,0,.14); max-height: 300px; overflow: auto; }
 .site-list li { padding: 7px 9px; border-radius: 6px; cursor: pointer; font-size: 13px; }
@@ -237,8 +237,9 @@ details.assume[open] summary::after { content: "Hide"; }
 .site-list li.wide { color: var(--accent-strong); font-weight: 600; }
 @media (max-width: 640px) { .site-row input[type=search] { font-size: 16px; } }
 #mountSeg { border-radius: 14px; }
-#mountSeg button { border-radius: 11px; line-height: 1.25; }
-#mountSeg button small { display: block; font-size: 10.5px; font-weight: 400; color: var(--muted); white-space: nowrap; }
+#mountSeg button { border-radius: 11px; line-height: 1.25; width: 158px; }   /* fixed widths: changing numbers or the bold selection never move the layout */
+@media (max-width: 640px) { #mountSeg { display: flex; width: 100%; } #mountSeg button { flex: 1 1 0; width: auto; min-width: 0; padding: 5px 6px; } }
+#mountSeg button small { display: block; font-size: 10.5px; font-weight: 400; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-variant-numeric: tabular-nums; }
 #mountSeg button small.ph { opacity: .7; font-style: italic; }   /* placeholder until the numbers are in, so the boxes keep their height */
 .site-status { font-size: 12.5px; color: var(--muted); margin-top: 6px; }
 .site-status b { color: var(--text); font-weight: 600; }
@@ -247,7 +248,7 @@ details.assume[open] summary::after { content: "Hide"; }
 #siteStatus > * { flex: none; }
 #siteStatus .nm { flex: 0 1 auto; min-width: 4em; overflow: hidden; text-overflow: ellipsis; }
 #siteStatus.multi:not(.err) { display: block; white-space: normal; }
-@media (max-width: 640px) { #siteStatus:not(.err):not(.busy) { display: none; } }   /* phones: only progress and errors show */
+@media (max-width: 640px) { #siteStatus:not(.err) { display: block; height: 1.45em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } #siteStatus:not(.err):not(.busy) { visibility: hidden; } }   /* phones: one reserved line, shown only for progress, so nothing jumps */
 .site-act { margin-top: 8px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 .btn.primary { background: var(--accent); color: #fff; border-color: var(--accent); font-weight: 600; }
 .btn.primary:disabled { opacity: .6; cursor: progress; }
@@ -1125,7 +1126,7 @@ details.assume[open] summary::after { content: "Hide"; }
     st.classList.toggle('err', !!err); st.classList.toggle('busy', !!msg || (!!SITE.est && !!fetching));
     if (msg) { set(msg); return; }
     const tail = `swing ±${SITE.sw}% · buffer factor ${nf(SITE.bk, 2)}`, nm = `<b class="nm">${esc(SITE.name)}</b>`;
-    if (SITE.est) { set(`${nm} · estimate from ${esc(SITE.est.name)}, ${nf(SITE.est.km, 0)} km away (${SITE.est.year}) · ${tail}${fetching ? ' · fetching 10 years of hourly data…' : ''}`); return; }
+    if (SITE.est) { set(`${nm} · ~ estimate from ${esc(SITE.est.name)}, ${nf(SITE.est.km, 0)} km${fetching ? ' · fetching 10-year data…' : ` · ${tail}`}`); return; }
     const edited = S.cf !== SITE.cf || S.sw !== SITE.sw || S.bk !== SITE.bk || (SITE.clip != null && S.clip !== SITE.clip);
     const per = /\d–\d/.test(String(SITE.year)) ? `10-year average ${SITE.year}` : `${SITE.year} weather`;
     const ovTxt = S.ov > 1 && SITE.grid ? ` · ${nf(SITE.clip, 1)}% clipped` : '';
@@ -1140,7 +1141,7 @@ details.assume[open] summary::after { content: "Hide"; }
       if (!f && pick && SITE.est && SITE.est.fits) { f = SITE.est.fits[b.dataset.m]; est = '~'; }
       const sm = b.querySelector('small');
       sm.classList.toggle('ph', !f);
-      sm.innerHTML = f ? `${est}${nf(f.kwh, 0)}<span class="lw"> kWh/kWp</span> · ${est}${nf(f.cf * 100, 1)}%` : !pick ? 'pick a site for yield' : fetching ? 'loading yield…' : 'yield not fitted yet';
+      sm.innerHTML = f ? `${est}${nf(f.kwh, 0)}<span class="lw"> kWh/kWp</span> · ${nf(f.cf * 100, 1)}%` : !pick ? 'pick a site for yield' : fetching ? 'loading yield…' : 'yield not fitted yet';
       b.title = f ? `${est ? 'Estimate: ' : ''}${nf(f.kwh, 0)} kWh/kWp DC a year, capacity factor ${nf(f.cf * 100, 1)}%` : '';
     });
   }

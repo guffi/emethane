@@ -316,7 +316,7 @@ details.assume[open] summary::after { content: "Hide"; }
           <summary>Assumptions</summary>
           <div class="agrid" id="agrid"></div>
           <div style="margin-top:14px"><button class="btn" id="resetBtn" type="button">Reset all inputs</button></div>
-          <p class="foot">Opening the page always starts from the defaults. Changes are not saved in the address bar; use Copy scenario link to keep or share a set of inputs. Real terms, pre-tax, unlevered: the IRR assumes no debt, so it is the project return before leverage. Rating bands for the unlevered IRR: under 10% weak, 10–15% OK, 15–20% good, 20–25% very good, 25% and up great. All capex in year 0, operation in years 1 to lifetime. Methane in MWh (LHV, 13.89 MWh/t). CO₂ and H₂ use are stoichiometric (CO₂ + 4 H₂ → CH₄ + 2 H₂O). Equipment costs are entered for a unit running 24/7 and each unit is then sized by its own uptime: the electrolyzer by the capacity factor, the methanation unit by the methanation uptime (never below the capacity factor). When methanation runs more hours than the electrolyzer, an H₂ buffer covers the gap; it is sized at the buffer size factor × an average day of H₂ × (1 − capacity factor / methanation uptime). Solar output is modelled as a sine wave over the year (the seasonal swing, automatically flattened as the capacity factor nears 100%). The defaults (25%, ±45%, 1.3) come from a synthetic tracker profile for southern Spain. Pick a site to replace them: the page fetches one year of hourly irradiance and temperature for that point, turns it into DC output per kWp for the chosen mounting (single-axis tracker limited to ±60°, fixed tilt facing the equator, or east-west at 10°; isotropic sky, 0.2 albedo, 10% DC losses, −0.35%/°C), with the electrolyzer following the array one to one. The capacity factor is the yearly mean; the seasonal swing is the sine amplitude that best reproduces venting on the real daily totals; the buffer factor is the smallest buffer that still delivers the full output in an hourly simulation, averaged over uptimes of 50–80%. It is a rough fit on one weather year, not a bankable yield study. Solar data: Open-Meteo historical weather API (ERA5 and ERA5-Land reanalysis, Copernicus/ECMWF), CC BY 4.0. Place search: Open-Meteo geocoding (GeoNames) and OpenStreetMap Nominatim (© OpenStreetMap contributors). Fetched sites are saved in this browser. On summer days when the electrolyzer makes more H₂ than the methanation unit can take, the surplus is vented and the electrolyzer is enlarged to make up for it, so pushing uptime too high costs more H₂ plant. With Auto ticked, the methanation uptime is reset to the value with the lowest production cost every time an input changes; moving the uptime slider switches Auto off. Hydrogen cost is per kg delivered to methanation, after venting. All power is bought at the solar price, including methanation power outside solar hours and DAC power when the CO₂ source is DAC. With DAC as the CO₂ source, CO₂ comes off the electrolyzer in step with the H₂, so a CO₂ buffer of 5.46 kg per kg of H₂ buffered is added, and DAC power and CO₂ cost also cover the CO₂ vented with the H₂ in summer. Biogenic CO₂ is assumed delivered as needed, with no buffer. The H₂ plant is costed in USD and converted at the exchange rate. Stacks are replaced when cumulative run hours pass the replacement interval.</p>
+          <p class="foot">Opening the page always starts from the defaults. Changes are not saved in the address bar; use Copy scenario link to keep or share a set of inputs. Real terms, pre-tax, unlevered: the IRR assumes no debt, so it is the project return before leverage. Rating bands for the unlevered IRR: under 10% weak, 10–15% OK, 15–20% good, 20–25% very good, 25% and up great. All capex in year 0, operation in years 1 to lifetime. Methane in MWh (LHV, 13.89 MWh/t). CO₂ and H₂ use are stoichiometric (CO₂ + 4 H₂ → CH₄ + 2 H₂O). Equipment costs are entered for a unit running 24/7 and each unit is then sized by its own uptime: the electrolyzer by the capacity factor, the methanation unit by the methanation uptime (never below the capacity factor). When methanation runs more hours than the electrolyzer, an H₂ buffer covers the gap; it is sized at the buffer size factor × an average day of H₂ × (1 − capacity factor / methanation uptime). Solar output is modelled as a sine wave over the year (the seasonal swing, automatically flattened as the capacity factor nears 100%). The defaults (25%, ±45%, 1.3) come from a synthetic tracker profile for southern Spain. Pick a site to replace them: the page fetches one year of hourly irradiance and temperature for that point, turns it into DC output per kWp for the chosen mounting (single-axis tracker limited to ±60°, fixed tilt facing the equator, or east-west at 10°; isotropic sky, 0.2 albedo, 10% DC losses, −0.35%/°C), with the electrolyzer following the array one to one. The capacity factor is the yearly mean; the seasonal swing is the sine amplitude that best reproduces venting on the real daily totals; the buffer factor is the smallest buffer that still delivers the full output in an hourly simulation, averaged over uptimes of 50–80%. It is a rough fit on one weather year, not a bankable yield study. Solar data via Open-Meteo, CC BY 4.0: irradiance from the EUMETSAT CM SAF SARAH-3 satellite record, the dataset PVGIS uses, wherever it covers the point (Europe, Africa, the Middle East, eastern South America); elsewhere, and for air temperature, from ERA5 reanalysis (Copernicus/ECMWF), which can read 5–10% off. The status line says which was used. Place search: Open-Meteo geocoding (GeoNames) and OpenStreetMap Nominatim (© OpenStreetMap contributors). Fetched sites are saved in this browser. On summer days when the electrolyzer makes more H₂ than the methanation unit can take, the surplus is vented and the electrolyzer is enlarged to make up for it, so pushing uptime too high costs more H₂ plant. With Auto ticked, the methanation uptime is reset to the value with the lowest production cost every time an input changes; moving the uptime slider switches Auto off. Hydrogen cost is per kg delivered to methanation, after venting. All power is bought at the solar price, including methanation power outside solar hours and DAC power when the CO₂ source is DAC. With DAC as the CO₂ source, CO₂ comes off the electrolyzer in step with the H₂, so a CO₂ buffer of 5.46 kg per kg of H₂ buffered is added, and DAC power and CO₂ cost also cover the CO₂ vented with the H₂ in summer. Biogenic CO₂ is assumed delivered as needed, with no buffer. The H₂ plant is costed in USD and converted at the exchange rate. Stacks are replaced when cumulative run hours pass the replacement interval.</p>
         </details>
       </section>
     </div>
@@ -814,8 +814,8 @@ details.assume[open] summary::after { content: "Hide"; }
   let SITE = { ...SITE_DEF };
   let pick = null, mount = 'tracker', year = LAST_YEAR, hits = [], hitIdx = -1, lastQ = '';
   const MOUNTS = { tracker: 'single-axis tracker', fixed: 'fixed tilt', ew: 'east-west' };
-  const store = { get() { try { return JSON.parse(localStorage.getItem('emSites') || '{}'); } catch (e) { return {}; } },
-    put(k, v) { try { const all = this.get(); all[k] = v; localStorage.setItem('emSites', JSON.stringify(all)); } catch (e) {} } };
+  const store = { get() { try { return JSON.parse(localStorage.getItem('emSites2') || '{}'); } catch (e) { return {}; } },
+    put(k, v) { try { const all = this.get(); all[k] = v; localStorage.setItem('emSites2', JSON.stringify(all)); } catch (e) {} } };
   const siteKey = (lat, lon, m, y) => `${(+lat).toFixed(2)},${(+lon).toFixed(2)},${m},${y}`;
   const weather = new Map();                    // raw hourly data already fetched in this visit
 
@@ -834,11 +834,27 @@ details.assume[open] summary::after { content: "Hide"; }
   async function getWeather(lat, lon, y) {
     const k = `${lat.toFixed(3)},${lon.toFixed(3)},${y}`;
     if (weather.has(k)) return weather.get(k);
-    const j = await getJSON(`https://archive-api.open-meteo.com/v1/archive?latitude=${lat.toFixed(4)}&longitude=${lon.toFixed(4)}&start_date=${y}-01-01&end_date=${y}-12-31&hourly=temperature_2m,shortwave_radiation,direct_normal_irradiance,diffuse_radiation&timezone=GMT&timeformat=unixtime`);
+    // Radiation from the SARAH-3 satellite record (the dataset behind PVGIS) where it covers the point: Europe, Africa,
+    // the Middle East and part of South America. Elsewhere, and for temperature, ERA5 reanalysis.
+    const q = `latitude=${lat.toFixed(4)}&longitude=${lon.toFixed(4)}&start_date=${y}-01-01&end_date=${y}-12-31&timezone=GMT&timeformat=unixtime`;
+    const [j, sat] = await Promise.all([
+      getJSON(`https://archive-api.open-meteo.com/v1/archive?${q}&hourly=temperature_2m,shortwave_radiation,direct_normal_irradiance,diffuse_radiation`),
+      getJSON(`https://satellite-api.open-meteo.com/v1/archive?${q}&hourly=shortwave_radiation,direct_normal_irradiance,diffuse_radiation&models=eumetsat_sarah3`).catch(() => null),
+    ]);
     const h = j && j.hourly;
     if (!h || !h.time || h.time.length < 8000) throw new Error('no hourly data for this point and year');
     const miss = h.shortwave_radiation.filter(v => v == null).length;
     if (miss > h.time.length * 0.02) throw new Error(`${y} is incomplete for this point`);
+    h.src = 'ERA5 reanalysis';
+    const sh = sat && sat.hourly;
+    if (sh && sh.time && sh.time.length === h.time.length && sh.time[0] === h.time[0]) {
+      const gap = sh.shortwave_radiation.filter(v => v == null).length;
+      if (gap < h.time.length * 0.02) {
+        for (const key of ['shortwave_radiation', 'direct_normal_irradiance', 'diffuse_radiation'])
+          h[key] = sh[key].map((v, i) => v == null ? h[key][i] : v);   // the odd missing satellite hour is filled from ERA5
+        h.src = 'SARAH-3 satellite';
+      }
+    }
     weather.set(k, h); return h;
   }
 
@@ -907,7 +923,7 @@ details.assume[open] summary::after { content: "Hide"; }
 
   const r1 = v => Math.round(v * 10) / 10, r2 = v => Math.round(v * 100) / 100;
   function applySite(fit, meta) {
-    SITE = { ...meta, cf: r1(fit.cf * 100), sw: Math.round(fit.sw * 100), bk: r2(fit.bk), kwh: Math.round(fit.kwh) };
+    SITE = { ...meta, src: fit.src, cf: r1(fit.cf * 100), sw: Math.round(fit.sw * 100), bk: r2(fit.bk), kwh: Math.round(fit.kwh) };
     S.cf = SITE.cf; S.sw = SITE.sw; S.bk = SITE.bk;
     update(); showSite();
   }
@@ -917,7 +933,7 @@ details.assume[open] summary::after { content: "Hide"; }
     if (msg) { st.innerHTML = msg; return; }
     if (SITE.builtin) { st.innerHTML = `Using <b>${esc(SITE.name)}</b>: capacity factor 25%, swing ±45%, buffer factor 1.3. Pick a place to fit these to real hourly data.`; return; }
     const edited = S.cf !== SITE.cf || S.sw !== SITE.sw || S.bk !== SITE.bk;
-    st.innerHTML = `Using <b>${esc(SITE.name)}</b> · ${MOUNTS[SITE.mount]} · ${SITE.year} weather${SITE.kwh ? ` · ${nf(SITE.kwh, 0)} kWh/kWp DC` : ''}: capacity factor ${nf(SITE.cf, 1)}%, swing ±${SITE.sw}%, buffer factor ${nf(SITE.bk, 2)}${edited ? '. <b>Some of these were changed by hand since.</b>' : '.'}`;
+    st.innerHTML = `Using <b>${esc(SITE.name)}</b> · ${MOUNTS[SITE.mount]} · ${SITE.year}${SITE.src ? ` ${esc(SITE.src)}` : ' weather'} data${SITE.kwh ? ` · ${nf(SITE.kwh, 0)} kWh/kWp DC` : ''}: capacity factor ${nf(SITE.cf, 1)}%, swing ±${SITE.sw}%, buffer factor ${nf(SITE.bk, 2)}${edited ? '. <b>Some of these were changed by hand since.</b>' : '.'}`;
   }
   // Each mounting button shows its yield and capacity factor once that site and year have been fitted.
   function updateMountSeg() {
@@ -950,7 +966,7 @@ details.assume[open] summary::after { content: "Hide"; }
       btn.textContent = 'Fitting…'; await new Promise(r => setTimeout(r, 20));
       // One download serves all three mountings, so fit and save them together; switching mounting is then instant.
       const fits = {};
-      for (const mk of Object.keys(MOUNTS)) { fits[mk] = refit(pvSeries(h, p0.lat, p0.lon, mk)); if (!(fits[mk].cf > 0.01)) throw new Error('almost no sun at this point'); }
+      for (const mk of Object.keys(MOUNTS)) { fits[mk] = { ...refit(pvSeries(h, p0.lat, p0.lon, mk)), src: h.src }; if (!(fits[mk].cf > 0.01)) throw new Error('almost no sun at this point'); }
       for (const mk of Object.keys(MOUNTS)) store.put(siteKey(p0.lat, p0.lon, mk, y0), fits[mk]);
       updateMountSeg();
       if (pick === p0 && year === y0) { document.getElementById('siteAct').hidden = true; applySite(fits[mount], { name: p0.name, lat: p0.lat, lon: p0.lon, mount, year: y0 }); }
@@ -1041,7 +1057,7 @@ details.assume[open] summary::after { content: "Hide"; }
     const rows = [['E-Methane Cost export', new Date().toISOString()], ['Scenario link', location.href.split('#')[0] + scenarioHash()], []];
     rows.push(['PARAMETERS'], ['Key', 'Parameter', 'Value', 'Unit']);
     ALL.forEach(a => rows.push([a.k, a.label, num(S[a.k]), a.unit || '']));
-    rows.push(['site', 'Site', SITE.builtin ? SITE.name : `${SITE.name} (${SITE.lat}, ${SITE.lon}), ${MOUNTS[SITE.mount]}, ${SITE.year} weather, ${SITE.kwh} kWh/kWp DC`, '']);
+    rows.push(['site', 'Site', SITE.builtin ? SITE.name : `${SITE.name} (${SITE.lat}, ${SITE.lon}), ${MOUNTS[SITE.mount]}, ${SITE.year} ${SITE.src || 'weather'} data, ${SITE.kwh} kWh/kWp DC`, '']);
     rows.push(['auto', 'Methanation uptime mode', S.auto ? 'auto (lowest production cost)' : 'manual', '']);
     rows.push([], ['RESULTS'], ['Metric', 'Value', 'Unit']);
     [

@@ -926,19 +926,20 @@ details.assume[open] summary::after { content: "Hide"; }
     act.hidden = false;
     document.getElementById('siteFetch').disabled = false;
     document.getElementById('siteFetch').textContent = 'Fetch hourly solar data';
-    document.getElementById('siteHint').textContent = `${pick.name} (${pick.lat.toFixed(2)}, ${pick.lon.toFixed(2)}) isn't saved yet. This pulls one year of hourly weather and refits the profile.`;
+    document.getElementById('siteHint').textContent = `${pick.name} (${pick.lat.toFixed(2)}, ${pick.lon.toFixed(2)}) isn't saved yet. This pulls one year of hourly weather and fits tracker, fixed tilt and east-west in one go.`;
   }
   async function fetchSite() {
     if (!pick) return;
-    const btn = document.getElementById('siteFetch'), hint = document.getElementById('siteHint'), p0 = pick, m0 = mount, y0 = year;
+    const btn = document.getElementById('siteFetch'), hint = document.getElementById('siteHint'), p0 = pick, y0 = year;
     btn.disabled = true; btn.textContent = 'Fetching…'; hint.textContent = '';
     try {
       const h = await getWeather(p0.lat, p0.lon, y0);
       btn.textContent = 'Fitting…'; await new Promise(r => setTimeout(r, 20));
-      const fit = refit(pvSeries(h, p0.lat, p0.lon, m0));
-      if (!(fit.cf > 0.01)) throw new Error('almost no sun at this point');
-      store.put(siteKey(p0.lat, p0.lon, m0, y0), fit);
-      if (pick === p0 && mount === m0 && year === y0) { document.getElementById('siteAct').hidden = true; applySite(fit, { name: p0.name, lat: p0.lat, lon: p0.lon, mount: m0, year: y0 }); }
+      // One download serves all three mountings, so fit and save them together; switching mounting is then instant.
+      const fits = {};
+      for (const mk of Object.keys(MOUNTS)) { fits[mk] = refit(pvSeries(h, p0.lat, p0.lon, mk)); if (!(fits[mk].cf > 0.01)) throw new Error('almost no sun at this point'); }
+      for (const mk of Object.keys(MOUNTS)) store.put(siteKey(p0.lat, p0.lon, mk, y0), fits[mk]);
+      if (pick === p0 && year === y0) { document.getElementById('siteAct').hidden = true; applySite(fits[mount], { name: p0.name, lat: p0.lat, lon: p0.lon, mount, year: y0 }); }
     } catch (e) {
       btn.disabled = false; btn.textContent = 'Try again';
       hint.textContent = `Couldn't get data: ${e.message || e}. Check the connection, try another year, or set the capacity factor by hand.`;

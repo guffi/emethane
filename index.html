@@ -49,6 +49,8 @@ header.top p { margin: 0; color: var(--muted); max-width: 62ch; font-size: 15px;
 .btn:focus-visible, input:focus-visible, .seg button:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .top-actions { display: flex; gap: 8px; align-items: center; }
 .copied { color: var(--accent-strong); font-size: 13px; }
+#resetTop.on { border-color: var(--offtake); color: var(--offtake); background: var(--offtake-soft); }
+#resetTop b { font-weight: 600; }
 .ln { display: none; }
 @media (max-width: 640px) { .lw { display: none !important; } .ln { display: inline; } }
 
@@ -195,7 +197,7 @@ details.assume[open] summary::after { content: "Hide"; }
     </div>
     <div class="top-actions">
       <span class="copied" id="copied" hidden>Link copied</span>
-      <button class="btn" id="resetTop" type="button" title="Back to the default inputs"><span class="lw">Reset to defaults</span><span class="ln">Reset</span></button>
+      <button class="btn" id="resetTop" type="button" title="Back to the default inputs"><span class="lw">Reset to defaults</span><span class="ln">Reset</span><b id="chg"></b></button>
       <button class="btn" id="copyBtn" type="button"><span class="lw">Copy scenario link</span><span class="ln">Copy link</span></button>
       <button class="btn" id="csvBtn" type="button"><span class="lw">Export CSV</span><span class="ln">CSV</span></button>
     </div>
@@ -245,7 +247,7 @@ details.assume[open] summary::after { content: "Hide"; }
           <summary>Assumptions</summary>
           <div class="agrid" id="agrid"></div>
           <div style="margin-top:14px"><button class="btn" id="resetBtn" type="button">Reset all inputs</button></div>
-          <p class="foot">Real terms, pre-tax, unlevered: the IRR assumes no debt, so it is the project return before leverage. Rating bands for the unlevered IRR: under 10% weak, 10–15% OK, 15–20% good, 20–25% very good, 25% and up great. All capex in year 0, operation in years 1 to lifetime. Methane in MWh (LHV, 13.89 MWh/t). CO₂ and H₂ use are stoichiometric (CO₂ + 4 H₂ → CH₄ + 2 H₂O). Equipment costs are entered for a unit running 24/7 and each unit is then sized by its own uptime: the electrolyzer by the capacity factor, the methanation unit by the methanation uptime (never below the capacity factor). When methanation runs more hours than the electrolyzer, an H₂ buffer covers the gap; it is sized at 1.3 × an average day of H₂ × (1 − capacity factor / methanation uptime), a rule fitted to an hourly simulation of a tracker plant in southern Spain. Solar output is modelled as a sine wave over the year (the seasonal swing, automatically flattened as the capacity factor nears 100%). On summer days when the electrolyzer makes more H₂ than the methanation unit can take, the surplus is vented and the electrolyzer is enlarged to make up for it, so pushing uptime too high costs more H₂ plant. With Auto ticked, the methanation uptime is reset to the value with the lowest production cost every time an input changes; moving the uptime slider switches Auto off. Hydrogen cost is per kg delivered to methanation, after venting. All power is bought at the solar price, including methanation power outside solar hours and DAC power when the CO₂ source is DAC. With DAC as the CO₂ source, CO₂ comes off the electrolyzer in step with the H₂, so a CO₂ buffer of 5.46 kg per kg of H₂ buffered is added, and DAC power and CO₂ cost also cover the CO₂ vented with the H₂ in summer. Biogenic CO₂ is assumed delivered as needed, with no buffer. The H₂ plant is costed in USD and converted at the exchange rate. Stacks are replaced when cumulative run hours pass the replacement interval.</p>
+          <p class="foot">Opening the page always starts from the defaults. Changes are not saved in the address bar; use Copy scenario link to keep or share a set of inputs. Real terms, pre-tax, unlevered: the IRR assumes no debt, so it is the project return before leverage. Rating bands for the unlevered IRR: under 10% weak, 10–15% OK, 15–20% good, 20–25% very good, 25% and up great. All capex in year 0, operation in years 1 to lifetime. Methane in MWh (LHV, 13.89 MWh/t). CO₂ and H₂ use are stoichiometric (CO₂ + 4 H₂ → CH₄ + 2 H₂O). Equipment costs are entered for a unit running 24/7 and each unit is then sized by its own uptime: the electrolyzer by the capacity factor, the methanation unit by the methanation uptime (never below the capacity factor). When methanation runs more hours than the electrolyzer, an H₂ buffer covers the gap; it is sized at 1.3 × an average day of H₂ × (1 − capacity factor / methanation uptime), a rule fitted to an hourly simulation of a tracker plant in southern Spain. Solar output is modelled as a sine wave over the year (the seasonal swing, automatically flattened as the capacity factor nears 100%). On summer days when the electrolyzer makes more H₂ than the methanation unit can take, the surplus is vented and the electrolyzer is enlarged to make up for it, so pushing uptime too high costs more H₂ plant. With Auto ticked, the methanation uptime is reset to the value with the lowest production cost every time an input changes; moving the uptime slider switches Auto off. Hydrogen cost is per kg delivered to methanation, after venting. All power is bought at the solar price, including methanation power outside solar hours and DAC power when the CO₂ source is DAC. With DAC as the CO₂ source, CO₂ comes off the electrolyzer in step with the H₂, so a CO₂ buffer of 5.46 kg per kg of H₂ buffered is added, and DAC power and CO₂ cost also cover the CO₂ vented with the H₂ in summer. Biogenic CO₂ is assumed delivered as needed, with no buffer. The H₂ plant is costed in USD and converted at the exchange rate. Stacks are replaced when cumulative run hours pass the replacement interval.</p>
         </details>
       </section>
     </div>
@@ -467,6 +469,11 @@ details.assume[open] summary::after { content: "Hide"; }
     });
     ASSUME.forEach(a => { if (!a.k) return; const i = document.getElementById('a-' + a.k); if (i !== skip) i.value = fmtIn(S[a.k]); });
     document.getElementById('autoMu').checked = !!S.auto;
+    const ch = ALL.filter(a => a.k !== 'mu' && S[a.k] !== a.def).map(a => `${a.label}: ${S[a.k]} (default ${a.def})`);
+    if (!S.auto) ch.push(`Methanation uptime: ${S.mu}% set by hand (default: auto)`);
+    const rb = document.getElementById('resetTop'); rb.classList.toggle('on', ch.length > 0);
+    document.getElementById('chg').textContent = ch.length ? ` · ${ch.length} changed` : '';
+    rb.title = ch.length ? 'Differs from the defaults:\n' + ch.join('\n') : 'All inputs are at their defaults';
     document.getElementById('dacNote').textContent = `${nf(S.dac, 1)} MWh`;
   }
 
@@ -663,13 +670,14 @@ details.assume[open] summary::after { content: "Hide"; }
       const q = new URLSearchParams(h);
       if (q.has('mu') && !q.has('auto')) S.auto = 0;   // older links carry a hand-set uptime
       q.forEach((v, k) => { if (!(k in S)) return; if (k === 'src') { if (v === 'DAC' || v === 'Biogenic') S.src = v; } else { const x = parseFloat(v); if (isFinite(x) && x >= 0) S[k] = x; } });
+      // A scenario link is applied once. The address bar is then cleaned, so a plain reload always shows the defaults.
+      history.replaceState(null, '', location.pathname + location.search);
     } catch (e) {}
   }
   function scenarioHash() { return '#' + ALL.map(a => `${a.k}=${encodeURIComponent(S[a.k])}`).join('&') + `&auto=${S.auto ? 1 : 0}`; }
-  function writeHash() { try { history.replaceState(null, '', scenarioHash()); } catch (e) {} }
 
   let raf = 0, lastSkip = null;
-  function update(skip) { lastSkip = skip || null; optimise(); syncControls(lastSkip); cancelAnimationFrame(raf); raf = requestAnimationFrame(() => { render(); writeHash(); }); }
+  function update(skip) { lastSkip = skip || null; optimise(); syncControls(lastSkip); cancelAnimationFrame(raf); raf = requestAnimationFrame(render); }
 
   document.getElementById('copyBtn').addEventListener('click', () => {
     const url = location.href.split('#')[0] + scenarioHash(), note = document.getElementById('copied');
@@ -715,6 +723,22 @@ details.assume[open] summary::after { content: "Hide"; }
   ['resetBtn', 'resetTop'].forEach(id => document.getElementById(id).addEventListener('click', () => { ALL.forEach(a => { S[a.k] = a.def; }); S.auto = 1; update(); }));
 
   buildMain(); buildAssume(); readHash(); optimise(); syncControls(); render();
+  // GitHub Pages lets a browser reuse its saved copy of this page for 10 minutes, so a new version can be missed.
+  // Compare the saved copy with the server's; if they differ, reload once, keeping the current inputs.
+  (async () => {
+    try {
+      if (!/^https?:$/.test(location.protocol) || Date.now() - (+sessionStorage.getItem('emFresh') || 0) < 60000) return;
+      const get = cache => fetch(location.pathname, { cache }).then(r => r.ok ? r.text() : '');
+      const [mine, live] = await Promise.all([get('force-cache'), get('no-store')]);
+      if (live && mine !== live && live.includes('E-Methane Cost')) {
+        sessionStorage.setItem('emFresh', Date.now());
+        // carry over only what the user changed, so everything else picks up the new defaults
+        const keep = ALL.filter(a => (a.k === 'mu' ? !S.auto : S[a.k] !== a.def)).map(a => `${a.k}=${encodeURIComponent(S[a.k])}`);
+        if (keep.length) history.replaceState(null, '', '#' + keep.join('&') + `&auto=${S.auto ? 1 : 0}`);
+        location.reload();
+      }
+    } catch (e) {}
+  })();
   let rt = 0; window.addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(render, 120); });
 })();
 </script>

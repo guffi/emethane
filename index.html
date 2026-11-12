@@ -67,8 +67,8 @@ header.top p { margin: 0; color: var(--muted); max-width: 62ch; font-size: 15px;
 .row .note { display: block; font-weight: 400; color: var(--muted); font-size: 11.5px; }
 .row .unit { color: var(--muted); font-size: 12px; }
 input[type=range] { width: 100%; accent-color: var(--accent); height: 16px; }
-input[type=number] { width: 100%; font: inherit; font-size: 14px; text-align: right; padding: 4px 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--panel-soft); color: var(--text); font-variant-numeric: tabular-nums; }
-input[type=number]:hover { border-color: var(--border-strong); }
+input[inputmode=decimal] { width: 100%; font: inherit; font-size: 14px; text-align: right; padding: 4px 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--panel-soft); color: var(--text); font-variant-numeric: tabular-nums; }
+input[inputmode=decimal]:hover { border-color: var(--border-strong); }
 @media (max-width: 560px) {
   .row { grid-template-columns: minmax(0, 1fr) 80px 46px; gap: 4px 10px; }
   .row > :first-child { grid-column: 1 / -1; }
@@ -153,7 +153,7 @@ details.assume[open] summary::after { content: "Hide"; }
 .afield { display: grid; grid-template-columns: minmax(0, 1fr) 92px; gap: 4px 10px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border); }
 .afield label { font-weight: 600; font-size: 13px; }
 .afield .unit { grid-column: 1 / -1; color: var(--muted); font-size: 12px; margin-top: -4px; }
-.afield input[type=number] { font-size: 14px; padding: 5px 8px; }
+.afield input[inputmode=decimal] { font-size: 14px; padding: 5px 8px; }
 .ahead { grid-column: 1 / -1; margin-top: 12px; }
 .foot { color: var(--muted); font-size: 12.5px; margin-top: 18px; max-width: 80ch; }
 @media (prefers-reduced-motion: no-preference) { .stack span { transition: flex-basis .25s ease; } }
@@ -228,7 +228,7 @@ details.assume[open] summary::after { content: "Hide"; }
         <div class="gauge-card">
           <div class="ghead"><span class="eyebrow">Project IRR, unlevered</span><span class="pill" id="kIrrPill"></span></div>
           <div id="gauge" role="img" aria-label="Unlevered IRR gauge"></div>
-          <table class="targets"><thead><tr><th>To reach</th><th>Off-take price</th><th>or solar power</th></tr></thead><tbody id="targets"></tbody></table>
+          <table class="targets"><thead><tr><th>To reach</th><th>Off-take price</th><th>or power price</th></tr></thead><tbody id="targets"></tbody></table>
         </div>
         <div class="kpi wide"><div><div class="k" style="margin:0">E-methane output</div></div><div class="v" id="kOut">–</div></div>
       </div>
@@ -244,9 +244,9 @@ details.assume[open] summary::after { content: "Hide"; }
     { k: 'co2', g: 'co2', label: 'CO₂ supply', unit: 't/yr', min: 100, max: 100000, log: true, def: 2000, dp: 0 },
     { k: 'src', g: 'co2', label: 'CO₂ source', type: 'seg', options: ['Biogenic', 'DAC'], def: 'Biogenic' },
     { k: 'cc', g: 'co2', label: 'CO₂ cost', note: 'excluding DAC power', unit: '€/t', min: 0, max: 400, step: 5, def: 130, dp: 0 },
-    { k: 'pw', g: 'h2', label: 'Solar power price', unit: '$/MWh', min: 0, max: 150, step: 1, def: 20, dp: 1 },
+    { k: 'pw', g: 'h2', label: 'Power price', unit: '$/MWh', min: 0, max: 100, step: 1, def: 20, dp: 1 },
     { k: 'cf', g: 'h2', label: 'Capacity factor', note: 'sets run hours and plant size', unit: '%', min: 5, max: 100, step: 1, def: 25, dp: 0 },
-    { k: 'h2c', g: 'h2', label: 'H₂ plant capex', note: 'total installed', unit: '$/kW', min: 100, max: 3000, step: 10, def: 300, dp: 0 },
+    { k: 'h2c', g: 'h2', label: 'H₂ plant capex', note: 'total installed', unit: '$/kW', min: 100, max: 2500, step: 10, def: 300, dp: 0 },
     { k: 'wacc', g: 'fin', label: 'Cost of capital (WACC)', unit: '%', min: 2, max: 20, step: 0.5, def: 8, dp: 1 },
     { k: 'price', g: 'off', label: 'Off-take price', note: 'per MWh of e-methane', unit: '€/MWh', min: 40, max: 400, step: 5, def: 180, dp: 0 },
   ];
@@ -343,6 +343,9 @@ details.assume[open] summary::after { content: "Hide"; }
   const mw = v => v >= 100 ? [nf(v, 0), 'MW'] : v >= 1 ? [nf(v, 1), 'MW'] : [nf(v * 1000, 0), 'kW'];
   const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
+  const parseNum = t => parseFloat(String(t).replace(/[,\s]/g, ''));
+  const fmtIn = (v, dp) => { const d = dp ?? ((String(v).split('.')[1] || '').length); return (+v).toLocaleString('en-US', { maximumFractionDigits: Math.min(d, 6) }); };
+
   // ---------- build controls ----------
   const toSlider = (a, v) => a.log ? 1000 * Math.log(v / a.min) / Math.log(a.max / a.min) : v;
   const fromSlider = (a, x) => { if (!a.log) return +x; const v = a.min * Math.pow(a.max / a.min, x / 1000); const mag = Math.pow(10, Math.floor(Math.log10(v)) - 1); return Math.round(v / mag) * mag; };
@@ -357,10 +360,11 @@ details.assume[open] summary::after { content: "Hide"; }
         row.querySelectorAll('button').forEach(b => b.addEventListener('click', () => { S[a.k] = b.dataset.v; update(); }));
       } else {
         const sMin = a.log ? 0 : a.min, sMax = a.log ? 1000 : a.max, sStep = a.log ? 1 : a.step;
-        row.innerHTML = `<label for="n-${a.k}">${esc(a.label)}${note}</label><input type="range" id="r-${a.k}" min="${sMin}" max="${sMax}" step="${sStep}" aria-label="${esc(a.label)} slider"><input type="number" id="n-${a.k}" step="any" inputmode="decimal"><span class="unit">${esc(a.unit)}</span>`;
-        const rng = row.querySelector('input[type=range]'), num = row.querySelector('input[type=number]');
+        row.innerHTML = `<label for="n-${a.k}">${esc(a.label)}${note}</label><input type="range" id="r-${a.k}" min="${sMin}" max="${sMax}" step="${sStep}" aria-label="${esc(a.label)} slider"><input type="text" id="n-${a.k}" inputmode="decimal" autocomplete="off"><span class="unit">${esc(a.unit)}</span>`;
+        const rng = row.querySelector('input[type=range]'), num = row.querySelector('input[inputmode=decimal]');
         rng.addEventListener('input', () => { S[a.k] = fromSlider(a, rng.value); update(rng); });
-        num.addEventListener('input', () => { const v = parseFloat(num.value); if (isFinite(v) && v >= 0) { S[a.k] = v; update(num); } });
+        num.addEventListener('input', () => { const v = parseNum(num.value); if (isFinite(v) && v >= 0) { S[a.k] = v; update(num); } });
+        num.addEventListener('blur', () => syncControls());
       }
       host.appendChild(row);
     });
@@ -370,9 +374,10 @@ details.assume[open] summary::after { content: "Hide"; }
     ASSUME.forEach(a => {
       if (a.head) { const h = document.createElement('div'); h.className = 'group-label ahead'; h.textContent = a.head; g.appendChild(h); return; }
       const f = document.createElement('div'); f.className = 'afield';
-      f.innerHTML = `<label for="a-${a.k}">${esc(a.label)}</label><input type="number" id="a-${a.k}" step="${a.step}" min="${a.min}" max="${a.max}" inputmode="decimal"><span class="unit">${esc(a.unit)}</span>`;
+      f.innerHTML = `<label for="a-${a.k}">${esc(a.label)}</label><input type="text" id="a-${a.k}" inputmode="decimal" autocomplete="off"><span class="unit">${esc(a.unit)}</span>`;
       const inp = f.querySelector('input');
-      inp.addEventListener('input', () => { const v = parseFloat(inp.value); if (isFinite(v) && v >= 0 && !(a.k === 'life' && v < 1) && !(['sec', 'ri', 'fx'].includes(a.k) && v <= 0)) { S[a.k] = v; update(inp); } });
+      inp.addEventListener('input', () => { const v = parseNum(inp.value); if (isFinite(v) && v >= 0 && !(a.k === 'life' && v < 1) && !(['sec', 'ri', 'fx'].includes(a.k) && v <= 0)) { S[a.k] = v; update(inp); } });
+      inp.addEventListener('blur', () => syncControls());
       g.appendChild(f);
     });
   }
@@ -382,9 +387,9 @@ details.assume[open] summary::after { content: "Hide"; }
       if (a.type === 'seg') { a.options.forEach(o => document.getElementById('seg-' + o).setAttribute('aria-pressed', String(S[a.k] === o))); return; }
       const r = document.getElementById('r-' + a.k), n = document.getElementById('n-' + a.k);
       if (r !== skip) r.value = toSlider(a, Math.min(a.max, Math.max(a.min, S[a.k])));
-      if (n !== skip) n.value = +(+S[a.k]).toFixed(a.dp);
+      if (n !== skip) n.value = fmtIn(S[a.k], a.dp);
     });
-    ASSUME.forEach(a => { if (!a.k) return; const i = document.getElementById('a-' + a.k); if (i !== skip) i.value = S[a.k]; });
+    ASSUME.forEach(a => { if (!a.k) return; const i = document.getElementById('a-' + a.k); if (i !== skip) i.value = fmtIn(S[a.k]); });
     document.getElementById('dacNote').textContent = `${nf(S.dac, 1)} MWh`;
   }
 
@@ -542,7 +547,7 @@ details.assume[open] summary::after { content: "Hide"; }
     document.getElementById('gauge').innerHTML = s + '</svg>';
   }
 
-  // What it takes to reach each band: the off-take price, or the solar power price at today's off-take.
+  // What it takes to reach each band: the off-take price, or the power price at today's off-take.
   function solve(key, target, lo, hi, up) {
     const irrAt = x => model({ ...S, [key]: x }).irr;
     const ok = x => { const v = irrAt(x); return isFinite(v) && v >= target; };

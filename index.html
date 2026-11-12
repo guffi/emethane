@@ -255,6 +255,33 @@ details.assume[open] summary::after { content: "Hide"; }
 .optres b { font-variant-numeric: tabular-nums; }
 .optres .btn { padding: 3px 9px; font-size: 12.5px; margin-left: 6px; vertical-align: 1px; }
 .optres.warn { background: var(--warn-soft); }
+.ovtog { font: inherit; font-size: 11.5px; color: var(--accent-strong); background: none; border: 0; padding: 0; margin-top: 2px; cursor: pointer; text-decoration: underline dotted; text-underline-offset: 2px; text-align: left; }
+.ovtog:hover { color: var(--accent); }
+.ovtog[aria-pressed="true"] { font-weight: 700; }
+.viz { position: fixed; z-index: 40; left: 16px; top: 80px; width: 420px; max-width: calc(100vw - 16px); max-height: calc(100vh - 16px); overflow: auto; background: var(--panel); border: 1px solid var(--border-strong); border-radius: 10px; box-shadow: 0 12px 32px rgba(0,0,0,.18); padding: 0 14px 12px; }
+.viz-head { position: sticky; top: 0; z-index: 1; background: var(--panel); display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; padding: 10px 0 8px; margin-bottom: 8px; border-bottom: 1px solid var(--border); cursor: move; user-select: none; touch-action: none; }
+.viz-head h3 { margin: 0; font-size: 14px; }
+.viz-sub { font-size: 11.5px; color: var(--muted); }
+.viz-x { font: inherit; font-size: 20px; line-height: 1; background: none; border: 0; color: var(--muted); cursor: pointer; padding: 0 6px 2px; border-radius: 6px; }
+.viz-x:hover { color: var(--text); background: var(--panel-soft); }
+.viz .seg button { padding: 4px 10px; font-size: 12px; }
+.viz-prev { display: grid; grid-template-columns: auto 1fr 44px; gap: 10px; align-items: center; font-size: 12px; color: var(--muted); margin: 0 0 8px; }
+.viz-prev b { color: var(--text); font-variant-numeric: tabular-nums; text-align: right; }
+.viz-cap { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; flex-wrap: wrap; font-size: 12px; color: var(--muted); margin: 12px 0 4px; }
+.viz-cap b { color: var(--text); font-weight: 600; font-variant-numeric: tabular-nums; }
+.viz-cap i { display: inline-block; width: 9px; height: 9px; border-radius: 2px; margin: 0 4px 0 8px; }
+.viz-stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; margin-top: 8px; }
+.viz-stats div { background: var(--panel-soft); border: 1px solid var(--border); border-radius: 6px; padding: 5px 9px; font-size: 11.5px; color: var(--muted); }
+.viz-stats b { display: block; font-size: 17px; color: var(--text); font-variant-numeric: tabular-nums; }
+.viz-year { display: grid; grid-template-columns: 26px minmax(0, 1fr); gap: 4px; }
+.viz-year .hl { display: flex; flex-direction: column; justify-content: space-between; font-size: 10.5px; color: var(--muted); text-align: right; }
+.viz-year .cv { position: relative; cursor: pointer; }
+.viz-year canvas { display: block; width: 100%; height: 96px; border-radius: 3px; image-rendering: pixelated; }
+.viz-year .mk { position: absolute; top: -3px; bottom: -3px; width: 0; border-left: 2px solid var(--text); pointer-events: none; }
+.viz-months { display: flex; justify-content: space-between; margin-left: 30px; font-size: 10.5px; color: var(--muted); }
+#vizCost { cursor: pointer; }
+.viz-note { font-size: 11.5px; color: var(--muted); margin: 10px 0 0; }
+@media (max-width: 640px) { .viz { left: 8px !important; right: 8px; top: auto !important; bottom: 8px; width: auto; max-height: 72vh; } .viz-head { cursor: default; } }
 .foot { color: var(--muted); font-size: 12.5px; margin-top: 18px; max-width: 80ch; }
 @media (prefers-reduced-motion: no-preference) { .stack span { transition: flex-basis .25s ease; } }
 </style>
@@ -332,7 +359,7 @@ details.assume[open] summary::after { content: "Hide"; }
           <summary>Assumptions</summary>
           <div class="agrid" id="agrid"></div>
           <div style="margin-top:14px"><button class="btn" id="resetBtn" type="button">Reset all inputs</button></div>
-          <p class="foot">Opening the page always starts from the defaults. Changes are not saved in the address bar; use Copy scenario link to keep or share a set of inputs. Real terms, pre-tax, unlevered: the IRR assumes no debt, so it is the project return before leverage. Rating bands for the unlevered IRR: under 10% weak, 10–15% OK, 15–20% good, 20–25% very good, 25% and up great. All capex in year 0, operation in years 1 to lifetime. Methane in MWh (LHV, 13.89 MWh/t). CO₂ and H₂ use are stoichiometric (CO₂ + 4 H₂ → CH₄ + 2 H₂O). Equipment costs are entered for a unit running 24/7 and each unit is then sized by its own uptime: the electrolyzer by the capacity factor, the methanation unit by the methanation uptime (never below the capacity factor). When methanation runs more hours than the electrolyzer, an H₂ buffer covers the gap; it is sized at the buffer size factor × an average day of H₂ × (1 − capacity factor / methanation uptime). H₂ plant capex is the stack plus the H₂ systems (power supply, gas separation and purification, compressor, water treatment and cooling, installation), each in $/kW of electrolyzer. H₂ leaves the stacks at atmospheric pressure and one compressor lifts it to the buffer pressure, or straight to the methanation pressure when there is no buffer. Compressor cost and compression energy are entered for 30 bar and scale with the delivery pressure (energy with ln of the pressure, cost with that to the power 0.7). The buffer can only be drawn down to the methanation pressure plus 2 bar, so the tank is sized, and paid for, at usable H₂ ÷ (1 − (methanation pressure + 2) ÷ buffer pressure). Methanation capex is entered for a 10 bar unit: 45% of it (reactor, heat exchangers, piping) scales with (10 ÷ pressure)^0.3 and a pressure-rating factor of 1.2% per bar above 5 bar, a rough rule, not a quote. CO₂ compression is not costed separately, and compressing the methane for delivery sits in Logistics. Solar output is modelled as a sine wave over the year (the seasonal swing, automatically flattened as the capacity factor nears 100%). The page opens on Spain: a point near its centre (40.0° N, 4.0° W) on a single-axis tracker with the array at the default 1.7× the electrolyzer, fitted as described here and stored in the page, which gives the defaults for capacity factor, swing, buffer factor and clipped solar. Pick another place to replace it: the page fetches the last ten full years of hourly irradiance and temperature for that point, turns each year into DC output per kWp for the chosen mounting (single-axis tracker limited to ±60°, fixed tilt facing the equator, or east-west at 10°; isotropic sky, 0.2 albedo, 10% DC losses, −0.35%/°C), with the electrolyzer following the array one to one. Each year is fitted on its own and the ten fits are averaged. The capacity factor is the yearly mean; the seasonal swing is the sine amplitude that best reproduces venting on the real daily totals; the buffer factor is the smallest buffer that still delivers the full output in an hourly simulation, averaged over uptimes of 50–80%. It is a rough fit on ten weather years, not a bankable yield study. Solar data via Open-Meteo, CC BY 4.0: irradiance from the EUMETSAT CM SAF SARAH-3 satellite record, the dataset PVGIS uses, wherever it covers the point (Europe, Africa, the Middle East, eastern South America); elsewhere, and for air temperature, from ERA5 reanalysis (Copernicus/ECMWF), which can read 5–10% off. The status line says which was used. Place search: Open-Meteo geocoding (GeoNames) and OpenStreetMap Nominatim (© OpenStreetMap contributors). Picking a place first shows the fitted results of the nearest of about 330 stored points worldwide (2025 data, marked ~), then fetches the exact data for the point in the background and swaps it in. Fetched sites are saved in this browser. On summer days when the electrolyzer makes more H₂ than the methanation unit can take, the surplus is vented and the electrolyzer is enlarged to make up for it, so pushing uptime too high costs more H₂ plant. With Auto ticked, the methanation uptime is reset to the value with the lowest production cost every time an input changes; moving the uptime slider switches Auto off. Hydrogen cost is per kg delivered to methanation, after venting. All power is bought at the solar price, including methanation power outside solar hours and DAC power when the CO₂ source is DAC. With DAC as the CO₂ source, CO₂ comes off the electrolyzer in step with the H₂, so a CO₂ buffer of 5.46 kg per kg of H₂ buffered is added, and DAC power and CO₂ cost also cover the CO₂ vented with the H₂ in summer. Biogenic CO₂ is assumed delivered as needed, with no buffer. The H₂ plant is costed in USD and converted at the exchange rate. Stacks are replaced when cumulative run hours pass the replacement interval, at the replacement cost as a share of the stack capex. Solar oversizing puts more kWp of array behind each kW of electrolyzer: the electrolyzer clips the midday peaks, runs more hours and is smaller for the same output. The power price is per MWh the array makes, so clipped MWh are paid for and wasted (a pay-as-produced PPA); methanation and DAC power are not taken from the clipped share. For a site with exact hourly data the capacity factor, swing, buffer factor and clipped share are fitted for every oversizing from 1 to 3 in 0.05 steps; the stored-point estimates have no hourly data, so they stay at 1 and the default of 1.7× applies once a site's exact data is in. Find lowest cost searches mounting, oversizing and methanation uptime with every price, capex, pressure and finance input held fixed. Plant size is not searched: every cost scales linearly with it, so it does not change the production cost. Scenario links made before the stack and systems split carried one total H₂ plant capex; they open with the stack set to that total minus the current systems cost.</p>
+          <p class="foot">Opening the page always starts from the defaults. Changes are not saved in the address bar; use Copy scenario link to keep or share a set of inputs. Real terms, pre-tax, unlevered: the IRR assumes no debt, so it is the project return before leverage. Rating bands for the unlevered IRR: under 10% weak, 10–15% OK, 15–20% good, 20–25% very good, 25% and up great. All capex in year 0, operation in years 1 to lifetime. Methane in MWh (LHV, 13.89 MWh/t). CO₂ and H₂ use are stoichiometric (CO₂ + 4 H₂ → CH₄ + 2 H₂O). Equipment costs are entered for a unit running 24/7 and each unit is then sized by its own uptime: the electrolyzer by the capacity factor, the methanation unit by the methanation uptime (never below the capacity factor). When methanation runs more hours than the electrolyzer, an H₂ buffer covers the gap; it is sized at the buffer size factor × an average day of H₂ × (1 − capacity factor / methanation uptime). H₂ plant capex is the stack plus the H₂ systems (power supply, gas separation and purification, compressor, water treatment and cooling, installation), each in $/kW of electrolyzer. H₂ leaves the stacks at atmospheric pressure and one compressor lifts it to the buffer pressure, or straight to the methanation pressure when there is no buffer. Compressor cost and compression energy are entered for 30 bar and scale with the delivery pressure (energy with ln of the pressure, cost with that to the power 0.7). The buffer can only be drawn down to the methanation pressure plus 2 bar, so the tank is sized, and paid for, at usable H₂ ÷ (1 − (methanation pressure + 2) ÷ buffer pressure). Methanation capex is entered for a 10 bar unit: 45% of it (reactor, heat exchangers, piping) scales with (10 ÷ pressure)^0.3 and a pressure-rating factor of 1.2% per bar above 5 bar, a rough rule, not a quote. CO₂ compression is not costed separately, and compressing the methane for delivery sits in Logistics. Solar output is modelled as a sine wave over the year (the seasonal swing, automatically flattened as the capacity factor nears 100%). The page opens on Spain: a point near its centre (40.0° N, 4.0° W) on a single-axis tracker with the array at the default 1.7× the electrolyzer, fitted as described here and stored in the page, which gives the defaults for capacity factor, swing, buffer factor and clipped solar. Pick another place to replace it: the page fetches the last ten full years of hourly irradiance and temperature for that point, turns each year into DC output per kWp for the chosen mounting (single-axis tracker limited to ±60°, fixed tilt facing the equator, or east-west at 10°; isotropic sky, 0.2 albedo, 10% DC losses, −0.35%/°C), with the electrolyzer following the array one to one. Each year is fitted on its own and the ten fits are averaged. The capacity factor is the yearly mean; the seasonal swing is the sine amplitude that best reproduces venting on the real daily totals; the buffer factor is the smallest buffer that still delivers the full output in an hourly simulation, averaged over uptimes of 50–80%. It is a rough fit on ten weather years, not a bankable yield study. Solar data via Open-Meteo, CC BY 4.0: irradiance from the EUMETSAT CM SAF SARAH-3 satellite record, the dataset PVGIS uses, wherever it covers the point (Europe, Africa, the Middle East, eastern South America); elsewhere, and for air temperature, from ERA5 reanalysis (Copernicus/ECMWF), which can read 5–10% off. The status line says which was used. Place search: Open-Meteo geocoding (GeoNames) and OpenStreetMap Nominatim (© OpenStreetMap contributors). Picking a place first shows the fitted results of the nearest of about 330 stored points worldwide (2025 data, marked ~), then fetches the exact data for the point in the background and swaps it in. Fetched sites are saved in this browser. On summer days when the electrolyzer makes more H₂ than the methanation unit can take, the surplus is vented and the electrolyzer is enlarged to make up for it, so pushing uptime too high costs more H₂ plant. With Auto ticked, the methanation uptime is reset to the value with the lowest production cost every time an input changes; moving the uptime slider switches Auto off. Hydrogen cost is per kg delivered to methanation, after venting. All power is bought at the solar price, including methanation power outside solar hours and DAC power when the CO₂ source is DAC. With DAC as the CO₂ source, CO₂ comes off the electrolyzer in step with the H₂, so a CO₂ buffer of 5.46 kg per kg of H₂ buffered is added, and DAC power and CO₂ cost also cover the CO₂ vented with the H₂ in summer. Biogenic CO₂ is assumed delivered as needed, with no buffer. The H₂ plant is costed in USD and converted at the exchange rate. Stacks are replaced when cumulative run hours pass the replacement interval, at the replacement cost as a share of the stack capex. Solar oversizing puts more kWp of array behind each kW of electrolyzer: the electrolyzer clips the midday peaks, runs more hours and is smaller for the same output. The power price is per MWh the array makes, so clipped MWh are paid for and wasted (a pay-as-produced PPA); methanation and DAC power are not taken from the clipped share. For a site with exact hourly data the capacity factor, swing, buffer factor and clipped share are fitted for every oversizing from 1 to 3 in 0.05 steps; the stored-point estimates have no hourly data, so they stay at 1 and the default of 1.7× applies once a site's exact data is in. Show on a chart, next to the oversizing slider, opens a floating window that shows one day of the site's hourly output against the stack (used and clipped), every hour of the year as a heat map of stack load, and the production cost at every oversizing from 1 to 3 with all other inputs as set; without a fetched site it uses an illustrative profile. Find lowest cost searches mounting, oversizing and methanation uptime with every price, capex, pressure and finance input held fixed. Plant size is not searched: every cost scales linearly with it, so it does not change the production cost. Scenario links made before the stack and systems split carried one total H₂ plant capex; they open with the stack set to that total minus the current systems cost.</p>
         </details>
       </section>
     </div>
@@ -350,6 +377,31 @@ details.assume[open] summary::after { content: "Hide"; }
         <table class="targets"><thead><tr><th>To reach</th><th>Off-take price</th><th>or power price</th></tr></thead><tbody id="targets"></tbody></table>
       </div>
     </aside>
+  </div>
+</div>
+<div class="viz" id="viz" role="dialog" aria-labelledby="vizTitle" hidden>
+  <div class="viz-head" id="vizHead" title="Drag to move; double-click to put it back next to the slider">
+    <div><h3 id="vizTitle">Solar oversizing, visualised</h3><div class="viz-sub" id="vizSub"></div></div>
+    <button class="viz-x" id="vizX" type="button" aria-label="Close">×</button>
+  </div>
+  <p class="viz-note" id="vizLoad" hidden>Loading this site’s hourly solar data…</p>
+  <div id="vizMain">
+    <div class="viz-prev" id="vizPrev"><label for="vizK">Preview oversizing</label><input type="range" id="vizK" min="1" max="3" step="0.05"><b id="vizKo"></b></div>
+    <div class="seg" id="vizSeg" role="group" aria-label="Day to show"><button type="button" data-d="summer" title="Sunniest day in June or July">Summer</button><button type="button" data-d="winter" title="Sunniest day in December or January">Winter</button><button type="button" data-d="cloudy" title="A spring-to-autumn day with about 40% of the summer day's output">Cloudy</button><button type="button" data-d="typical" title="The day with the median output of the year">Typical</button></div>
+    <div class="viz-cap"><span id="vizDayLab"></span><span><i style="background:var(--accent)"></i>stack uses<i style="background:var(--offtake)"></i>clipped</span></div>
+    <div class="chart" id="vizDay" role="img" aria-label="Solar output over the chosen day against the stack's capacity"></div>
+    <div class="viz-stats">
+      <div><b id="vzDL">–</b>stack load, this day</div><div><b id="vzDC">–</b>solar clipped, this day</div>
+      <div><b id="vzYL">–</b>stack load, full year</div><div><b id="vzYC">–</b>solar clipped, full year</div>
+    </div>
+    <div class="viz-cap"><span>Stack load, every hour of the year. Click a day to show it.</span><span><i style="background:var(--offtake)"></i>full and clipping</span></div>
+    <div class="viz-year"><div class="hl"><span>0h</span><span>12h</span><span>24h</span></div><div class="cv" id="vizYearWrap"><canvas id="vizYear" aria-label="Heat map of stack load by hour and day"></canvas><div class="mk" id="vizMk"></div></div></div>
+    <div class="viz-months"><span>Jan</span><span>Apr</span><span>Jul</span><span>Oct</span><span>Dec</span></div>
+    <div id="vizCostBox">
+      <div class="viz-cap"><span>Production cost vs oversizing. Click to set it.</span></div>
+      <div class="chart" id="vizCost" role="img" aria-label="Production cost at every oversizing from 1 to 3"></div>
+    </div>
+    <p class="viz-note" id="vizNote"></p>
   </div>
 </div>
 
@@ -564,6 +616,11 @@ details.assume[open] summary::after { content: "Hide"; }
           cell.append(num, unit);
           cell.insertAdjacentHTML('beforeend', '<span class="capx tot" id="h2TotLine"></span>');
           cell.querySelector('#bopLine').addEventListener('click', () => { document.getElementById('assume').open = true; document.getElementById('bopHead').scrollIntoView({ behavior: 'smooth', block: 'center' }); });
+        }
+        if (a.k === 'ov') {
+          const cell = document.createElement('div'); cell.className = 'lbl';
+          const lab = row.firstElementChild; row.replaceChild(cell, lab); cell.appendChild(lab);
+          cell.insertAdjacentHTML('beforeend', '<button type="button" class="ovtog" id="vizTog" aria-pressed="false" aria-controls="viz">Show on a chart</button>');
         }
         if (a.k === 'mu') {
           const cell = document.createElement('div'); cell.className = 'lbl';
@@ -819,6 +876,7 @@ details.assume[open] summary::after { content: "Hide"; }
     const payYear = (() => { let c = 0; for (let t = 0; t < m.cfs.length; t++) { c += m.cfs[t]; if (c >= 0 && t > 0) return t; } return null; })();
     document.getElementById('cfSub').textContent = payYear ? `Paid back in year ${payYear}` : 'Not paid back within the lifetime';
     drawCf(m);
+    vizRender();
   }
 
   // ---------- IRR gauge ----------
@@ -1313,8 +1371,207 @@ details.assume[open] summary::after { content: "Hide"; }
   window.__findBest = findBest;
   ['resetBtn', 'resetTop'].forEach(id => document.getElementById(id).addEventListener('click', () => { ALL.forEach(a => { S[a.k] = a.def; }); ovSet = S.ov; S.ov = 1; S.auto = 1; resetSite(); document.getElementById('optRes').hidden = true; update(); }));
 
+  // ---------- oversizing visualiser: a floating window showing what the array does against the stack ----------
+  // With a fetched site it uses that site's real hourly output (downloading it again if only the saved fit is in this browser)
+  // and follows the oversizing slider. Without one it shows an illustrative southern-Spain profile with its own preview slider.
+  const VZ = { open: false, pick: 'summer', day: null, prevK: 1.7, key: '', p: null, days: null, real: false, loading: '', failed: '', ckey: '', curve: null, pos: null };
+  try { const v = JSON.parse(localStorage.getItem('emViz') || '{}'); VZ.open = !!v.open; VZ.pos = Array.isArray(v.pos) ? v.pos : null; if (v.prevK >= 1 && v.prevK <= 3) VZ.prevK = v.prevK; } catch (e) {}
+  const vzSave = () => { try { localStorage.setItem('emViz', JSON.stringify({ open: VZ.open, pos: VZ.pos, prevK: VZ.prevK })); } catch (e) {} };
+  const rgb = n => { const h = getComputedStyle(document.documentElement).getPropertyValue(n).trim().replace('#', ''); const f = h.length === 3 ? h.split('').map(c => c + c).join('') : h; return [0, 2, 4].map(i => parseInt(f.slice(i, i + 2), 16) || 0); };
+
+  // Illustrative tracker-like profile at 37.5°N: clear-sky shape, longer and higher days in summer, more cloud in winter, scaled to the capacity factor.
+  function vzSynth(cf) {
+    let seed = 11; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+    const D = Math.PI / 180, lat = 37.5 * D, p = new Float64Array(8760);
+    for (let d = 0; d < 365; d++) {
+      const dec = 23.44 * D * Math.sin(2 * Math.PI * (284 + d + 1) / 365);
+      const hw = Math.acos(Math.max(-1, Math.min(1, -Math.tan(lat) * Math.tan(dec)))) / (15 * D);
+      const pk = 0.9 * (0.6 + 0.4 * Math.cos(lat - dec));
+      const cloudy = rnd() < 0.08 + 0.22 * (0.5 + 0.5 * Math.cos(2 * Math.PI * (d - 15) / 365));
+      const cl = cloudy ? 0.25 + 0.45 * rnd() : 0.92 + 0.08 * rnd();
+      for (let h = 0; h < 24; h++) {
+        const t = h + 0.5 - 12; if (Math.abs(t) >= hw) continue;
+        p[d * 24 + h] = pk * cl * Math.pow(Math.cos(Math.PI / 2 * t / hw), 0.55) * (cloudy ? 0.6 + 0.4 * rnd() : 1);
+      }
+    }
+    let s = 0; for (const v of p) s += v; const f = cf * p.length / (s || 1);
+    for (let i = 0; i < p.length; i++) p[i] *= f;
+    return p;
+  }
+  // Pick the days the buttons show. Hours are shifted to rough solar time (longitude ÷ 15).
+  function vzDays(p, shift, south) {
+    const nd = Math.floor(p.length / 24), at = i => p[Math.min(p.length - 1, Math.max(0, i))], tot = [];
+    for (let d = 0; d < nd; d++) { let t = 0; for (let h = 0; h < 24; h++) t += at(d * 24 + h - shift); tot.push(t); }
+    const best = (ok, f) => { let bi = 0, bv = Infinity; tot.forEach((t, d) => { if (ok(d)) { const v = f(t); if (v < bv) { bv = v; bi = d; } } }); return bi; };
+    const jun = d => d >= 151 && d < 212, dec = d => d < 31 || d >= 334, mid = d => (d >= 90 && d < 273) !== south;
+    const summer = best(south ? dec : jun, t => -t), winter = best(south ? jun : dec, t => -t);
+    const med = [...tot].sort((a, b) => a - b)[nd >> 1];
+    return { nd, shift, summer, winter, cloudy: best(mid, t => Math.abs(t - 0.4 * tot[summer])), typical: best(() => true, t => Math.abs(t - med)) };
+  }
+  const vzDayVals = d => { const o = []; for (let h = 0; h < 24; h++) o.push(VZ.p[Math.min(VZ.p.length - 1, Math.max(0, d * 24 + h - VZ.days.shift))] || 0); return o; };
+
+  function vzData() {
+    // The days shown come from the latest full year of the site's record; the fit itself averages every year.
+    if (SITE.grid && SITE.lat != null) {
+      const wk = `${(+SITE.lat).toFixed(3)},${(+SITE.lon).toFixed(3)},${PERIOD}`, key = `${wk},${SITE.mount || mount}`;
+      if (VZ.key === key) return 'real';
+      const h = weather.get(wk);
+      if (h) {
+        const ys = yearSlices(h), hy = ys[ys.length - 1];
+        if (hy) { VZ.key = key; VZ.year = new Date(hy.time[0] * 1000).getUTCFullYear(); VZ.p = pvSeries(hy, +SITE.lat, +SITE.lon, SITE.mount || mount); VZ.real = true; VZ.days = vzDays(VZ.p, Math.round(+SITE.lon / 15), +SITE.lat < 0); VZ.day = null; return 'real'; }
+      }
+      if (VZ.failed !== wk && !h) {
+        if (VZ.loading !== wk) { VZ.loading = wk; getWeather(+SITE.lat, +SITE.lon).then(() => { VZ.loading = ''; vizRender(); }, () => { VZ.loading = ''; VZ.failed = wk; vizRender(); }); }
+        return 'loading';
+      }
+    }
+    const key = 'syn' + S.cf;
+    if (VZ.key !== key) { VZ.key = key; VZ.year = 2025; VZ.p = vzSynth(Math.min(1, S.cf / 100)); VZ.real = false; VZ.days = vzDays(VZ.p, 0, false); VZ.day = null; }
+    return 'synth';
+  }
+
+  // Production cost at every oversizing step for the current inputs, the same search Find lowest cost runs for one mounting.
+  function vzCurve() {
+    if (!VZ.real || !SITE.grid) return null;
+    const ck = JSON.stringify([ALL.filter(a => !['ov', 'cf', 'sw', 'bk', 'clip', 'mu'].includes(a.k)).map(a => S[a.k]), S.auto, S.auto ? 0 : S.mu, VZ.key]);
+    if (VZ.ckey === ck) return VZ.curve;
+    const out = [];
+    for (let i = 0; i < OV_N; i++) { const k = +(1 + OV_STEP * i).toFixed(2), s = { ...S, ov: k, ...siteVals(SITE, k) }; if (S.auto) s.mu = bestUptime(s); out.push([k, model(s).lcom]); }
+    VZ.ckey = ck; VZ.curve = out; return out;
+  }
+
+  function vzDrawDay(vals, k) {
+    const el = document.getElementById('vizDay'), w = Math.max(260, el.clientWidth || 390), h = 170;
+    const L = 40, R = 8, T = 8, B = 22, iw = w - L - R, ih = h - T - B;
+    const kp = vals.map(v => v * k), used = kp.map(v => Math.min(v, 1));
+    const ticks = niceTicks(0, Math.max(1.2, ...kp) * 1.05, 4), top = ticks[ticks.length - 1];
+    const X = t => (L + iw * t / 24).toFixed(1), Y = v => (T + ih - ih * v / top).toFixed(1);
+    const line = a => a.map((v, i) => `${X(i + 0.5)},${Y(v)}`).join(' ');
+    let s = `<svg viewBox="0 0 ${w} ${h}" width="${w}" height="${h}">`;
+    ticks.forEach(t => { s += `<line x1="${L}" x2="${w - R}" y1="${Y(t)}" y2="${Y(t)}" stroke="var(${t === 0 ? '--axis' : '--grid'})"/><text x="${L - 6}" y="${+Y(t) + 4}" text-anchor="end" font-size="11" fill="var(--muted)">${nf(t * 100, 0)}%</text>`; });
+    [0, 6, 12, 18, 24].forEach(t => { s += `<text x="${X(t)}" y="${h - 6}" text-anchor="${t === 0 ? 'start' : t === 24 ? 'end' : 'middle'}" font-size="11" fill="var(--muted)">${t}:00</text>`; });
+    s += `<polygon points="${line(kp)} ${line(used).split(' ').reverse().join(' ')}" fill="var(--offtake)" fill-opacity="0.35"/>`;
+    s += `<polygon points="${X(0.5)},${Y(0)} ${line(used)} ${X(23.5)},${Y(0)}" fill="var(--accent)" fill-opacity="0.3"/>`;
+    s += `<polyline points="${line(kp)}" fill="none" stroke="var(--offtake)" stroke-width="1.5" stroke-linejoin="round"/>`;
+    s += `<polyline points="${line(used)}" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linejoin="round"/>`;
+    s += `<line x1="${L}" x2="${w - R}" y1="${Y(1)}" y2="${Y(1)}" stroke="var(--text)" stroke-width="1.2" stroke-dasharray="5 4"/><text x="${L + 4}" y="${+Y(1) - 5}" font-size="11" fill="var(--text)">stack at full power</text>`;
+    el.innerHTML = s + '</svg>';
+  }
+
+  function vzDrawYear(k) {
+    const cv = document.getElementById('vizYear'), nd = VZ.days.nd, ctx = cv.getContext('2d');
+    cv.width = nd; cv.height = 24;
+    const img = ctx.createImageData(nd, 24), bg = rgb('--panel-soft'), ac = rgb('--accent'), of = rgb('--offtake');
+    for (let d = 0; d < nd; d++) {
+      const v = vzDayVals(d);
+      for (let h = 0; h < 24; h++) {
+        const x = v[h] * k, u = Math.min(1, x), i = (h * nd + d) * 4;
+        const c = x > 1.0001 ? of : u > 0.003 ? ac.map((a, j) => bg[j] + (a - bg[j]) * (0.12 + 0.88 * u)) : bg;
+        img.data[i] = c[0]; img.data[i + 1] = c[1]; img.data[i + 2] = c[2]; img.data[i + 3] = 255;
+      }
+    }
+    ctx.putImageData(img, 0, 0);
+    document.getElementById('vizMk').style.left = `${100 * (VZ.day + 0.5) / nd}%`;
+  }
+
+  function vzDrawCost(curve) {
+    const el = document.getElementById('vizCost'), w = Math.max(260, el.clientWidth || 390), h = 150;
+    const L = 40, R = 10, T = 18, B = 22, iw = w - L - R, ih = h - T - B;
+    const ys = curve.map(c => c[1]).filter(isFinite), y0 = Math.min(...ys), y1 = Math.max(...ys), ticks = niceTicks(y0 - (y1 - y0) * 0.25, y1, 3);
+    const lo = ticks[0], hi = ticks[ticks.length - 1];
+    const X = k => L + iw * (k - 1) / 2, Y = v => T + ih - ih * (v - lo) / (hi - lo || 1);
+    const best = curve.reduce((a, b) => (b[1] < a[1] ? b : a)), cur = Math.min(3, Math.max(1, S.ov));
+    const curV = (() => { const x = (cur - 1) / OV_STEP, i = Math.min(OV_N - 2, Math.floor(x)), t = x - i; return curve[i][1] * (1 - t) + curve[i + 1][1] * t; })();
+    let s = `<svg viewBox="0 0 ${w} ${h}" width="${w}" height="${h}">`;
+    ticks.forEach(t => { s += `<line x1="${L}" x2="${w - R}" y1="${Y(t)}" y2="${Y(t)}" stroke="var(--grid)"/><text x="${L - 6}" y="${Y(t) + 4}" text-anchor="end" font-size="11" fill="var(--muted)">€${nf(t, 0)}</text>`; });
+    [1, 1.5, 2, 2.5, 3].forEach(k => { s += `<text x="${X(k)}" y="${h - 6}" text-anchor="middle" font-size="11" fill="var(--muted)">${nf(k, 1)}×</text>`; });
+    s += `<polyline points="${curve.map(c => `${X(c[0]).toFixed(1)},${Y(c[1]).toFixed(1)}`).join(' ')}" fill="none" stroke="var(--accent)" stroke-width="2.2" stroke-linejoin="round"/>`;
+    s += `<circle cx="${X(best[0])}" cy="${Y(best[1])}" r="4" fill="var(--panel)" stroke="var(--accent)" stroke-width="2"/><text x="${X(best[0])}" y="${Y(best[1]) + 15}" text-anchor="middle" font-size="11" fill="var(--accent-strong)">lowest €${nf(best[1], 1)} at ${nf(best[0], 2)}×</text>`;
+    s += `<line x1="${X(cur)}" x2="${X(cur)}" y1="${T - 6}" y2="${T + ih}" stroke="var(--offtake)" stroke-opacity="0.45"/><circle cx="${X(cur)}" cy="${Y(curV)}" r="5" fill="var(--offtake)"/>`;
+    const right = X(cur) > L + iw * 0.7;
+    s += `<text x="${X(cur) + (right ? -8 : 8)}" y="${T - 4}" text-anchor="${right ? 'end' : 'start'}" font-size="11.5" font-weight="700" fill="var(--offtake)">now ${nf(cur, 2)}×, €${nf(curV, 1)}</text>`;
+    el.innerHTML = s + '</svg>';
+  }
+
+  function vzPlace() {
+    const box = document.getElementById('viz'); if (box.hidden) return;
+    if (matchMedia('(max-width: 640px)').matches) { box.style.left = box.style.top = ''; return; }
+    const bw = box.offsetWidth, bh = box.offsetHeight, pinH = document.getElementById('pin').offsetHeight;
+    let x, y;
+    if (VZ.pos) [x, y] = VZ.pos;
+    else {
+      const row = document.getElementById('r-ov').closest('.row').getBoundingClientRect(), pan = document.querySelector('.o-inputs').getBoundingClientRect();
+      x = pan.right + 12; if (x + bw > innerWidth - 8) x = row.right - bw; y = row.top - 60;
+    }
+    x = Math.min(Math.max(8, x), innerWidth - bw - 8);
+    y = Math.max(Math.min(y, innerHeight - bh - 8), Math.min(pinH + 8, innerHeight - bh - 8), 8);
+    box.style.left = x + 'px'; box.style.top = y + 'px';
+  }
+
+  function vizRender() {
+    const box = document.getElementById('viz'), tog = document.getElementById('vizTog');
+    if (tog) { tog.setAttribute('aria-pressed', String(VZ.open)); tog.textContent = VZ.open ? 'Hide the chart' : 'Show on a chart'; }
+    if (!VZ.open) { box.hidden = true; return; }
+    const was = box.hidden; box.hidden = false;
+    const st = vzData();
+    document.getElementById('vizSub').textContent = st === 'synth' ? 'Illustrative profile, southern Spain, tracker' : `${String(SITE.name).split(',')[0]} · ${MOUNTS[SITE.mount || mount]} · days from ${VZ.year}`;
+    document.getElementById('vizLoad').hidden = st !== 'loading'; if (st === 'loading') document.getElementById('vizSub').textContent = `${String(SITE.name).split(',')[0]} · loading`; document.getElementById('vizMain').hidden = st === 'loading';
+    if (st !== 'loading') {
+      if (VZ.day == null) VZ.day = VZ.days[VZ.pick] ?? VZ.days.summer;
+      const k = VZ.real ? Math.max(1, S.ov) : VZ.prevK;
+      document.getElementById('vizPrev').hidden = VZ.real;
+      document.getElementById('vizK').value = VZ.prevK; document.getElementById('vizKo').textContent = `${nf(VZ.prevK, 2)}×`;
+      document.querySelectorAll('#vizSeg button').forEach(b => b.setAttribute('aria-pressed', String(VZ.days[b.dataset.d] === VZ.day)));
+      const dt = new Date(Date.UTC(VZ.year || 2025, 0, 1 + VZ.day)).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' });
+      document.getElementById('vizDayLab').innerHTML = `<b>${dt}</b>, array <b>${nf(k, 2)}×</b> the stack, solar time`;
+      const v = vzDayVals(VZ.day); vzDrawDay(v, k);
+      let du = 0, dp = 0; v.forEach(x => { du += Math.min(1, x * k); dp += x * k; });
+      let yu = 0, yp = 0; for (const x of VZ.p) { yu += Math.min(1, x * k); yp += x * k; }
+      const pc = x => `${nf(x * 100, 0)}%`;
+      document.getElementById('vzDL').textContent = pc(du / 24); document.getElementById('vzDC').textContent = pc(dp > 0 ? 1 - du / dp : 0);
+      document.getElementById('vzYL').textContent = pc(yu / VZ.p.length); document.getElementById('vzYC').textContent = pc(yp > 0 ? 1 - yu / yp : 0);
+      vzDrawYear(k);
+      const curve = vzCurve();
+      document.getElementById('vizCostBox').hidden = !curve; if (curve) vzDrawCost(curve);
+      document.getElementById('vizNote').textContent = VZ.real
+        ? `100% is the stack at full power. Teal is power the stack uses, orange is solar paid for and thrown away. The cost curve runs the full model at every step with all current inputs${S.auto ? ', re-optimising methanation uptime each time' : ''}.`
+        : 'Illustrative profile. Pick a site and fetch its hourly data to see real weather and the full-year cost curve; this view then follows the oversizing slider.';
+    }
+    if (was) vzPlace(); else vzPlace();
+  }
+
+  function vizInit() {
+    const box = document.getElementById('viz'), head = document.getElementById('vizHead');
+    document.getElementById('vizTog').addEventListener('click', () => { VZ.open = !VZ.open; vzSave(); vizRender(); });
+    document.getElementById('vizX').addEventListener('click', () => { VZ.open = false; vzSave(); vizRender(); document.getElementById('vizTog').focus(); });
+    box.addEventListener('keydown', e => { if (e.key === 'Escape') { VZ.open = false; vzSave(); vizRender(); } });
+    document.querySelectorAll('#vizSeg button').forEach(b => b.addEventListener('click', () => { VZ.pick = b.dataset.d; VZ.day = VZ.days[VZ.pick]; vizRender(); }));
+    document.getElementById('vizK').addEventListener('input', e => { VZ.prevK = +e.target.value; vizRender(); });
+    document.getElementById('vizK').addEventListener('change', vzSave);
+    const wrap = document.getElementById('vizYearWrap');
+    const pickDay = e => { const r = wrap.getBoundingClientRect(); VZ.day = Math.min(VZ.days.nd - 1, Math.max(0, Math.floor((e.clientX - r.left) / r.width * VZ.days.nd))); vizRender(); };
+    wrap.addEventListener('pointerdown', e => { pickDay(e); wrap.setPointerCapture(e.pointerId); const mv = ev => pickDay(ev); wrap.addEventListener('pointermove', mv); wrap.addEventListener('pointerup', () => wrap.removeEventListener('pointermove', mv), { once: true }); });
+    document.getElementById('vizCost').addEventListener('click', e => {
+      if (!SITE.grid) return;
+      const svg = e.currentTarget.querySelector('svg'); if (!svg) return;
+      const r = svg.getBoundingClientRect(), w = svg.viewBox.baseVal.width, x = (e.clientX - r.left) * w / r.width;
+      S.ov = ovSet = +Math.min(3, Math.max(1, Math.round((1 + 2 * (x - 40) / (w - 50)) / OV_STEP) * OV_STEP)).toFixed(2);
+      applyOv(); update();
+    });
+    head.addEventListener('pointerdown', e => {
+      if (e.target.closest('button') || matchMedia('(max-width: 640px)').matches) return;
+      const r = box.getBoundingClientRect(), dx = e.clientX - r.left, dy = e.clientY - r.top;
+      head.setPointerCapture(e.pointerId);
+      const mv = ev => { VZ.pos = [ev.clientX - dx, ev.clientY - dy]; vzPlace(); const b = box.getBoundingClientRect(); VZ.pos = [b.left, b.top]; };
+      head.addEventListener('pointermove', mv);
+      head.addEventListener('pointerup', () => { head.removeEventListener('pointermove', mv); vzSave(); }, { once: true });
+    });
+    head.addEventListener('dblclick', () => { VZ.pos = null; vzSave(); vzPlace(); });
+    addEventListener('resize', vzPlace);
+  }
+
   // Links made before the page opened on Spain (no d= marker) leave out some site inputs; those take the values the page had then.
-  buildMain(); buildAssume(); defaultSite(); buildSite(); readHash();
+  buildMain(); buildAssume(); defaultSite(); buildSite(); vizInit(); readHash();
   if (readSiteHashLater) { const q = readSiteHashLater; if (!q.has('d')) Object.entries({ cf: 25, sw: 45, bk: 1.3, clip: 0, ov: 1 }).forEach(([k, v]) => { if (!q.has(k)) S[k] = v; }); readSiteHash(q); }
   ovSet = S.ov; if (!SITE.grid) S.ov = 1;
   document.getElementById('siteQ').value = SITE.name; updateMountSeg();
